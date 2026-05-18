@@ -1,19 +1,19 @@
 /**
  * PropertyLevel — property dashboard.
  *
- * Adds an Indicator Breakdown section below the radar/grid row. The
- * breakdown gives per-process drill-down: which EOV indicators are
- * driving each ecosystem-process score, with baseline → current deltas
- * and 5-year sparklines.
+ * Swaps the placeholder "UNSCORED" IndicatorGrid for AreaRanking, which
+ * shows monitoring points ranked by current EHI with tier-coloured
+ * badges, sparklines, and baseline-to-current deltas using real
+ * dataset scores.
  */
 
-import EHIGauge           from '../charts/EHIGauge'
-import TrendChart         from '../charts/TrendChart'
-import ProcessRadar       from '../charts/ProcessRadar'
-import IndicatorGrid      from '../charts/IndicatorGrid'
-import IndicatorBreakdown from '../charts/IndicatorBreakdown'
-import MapView            from '../MapView'
-import MonitoringTimeline from '../MonitoringTimeline'
+import EHIGauge            from '../charts/EHIGauge'
+import TrendChart          from '../charts/TrendChart'
+import ProcessRadar        from '../charts/ProcessRadar'
+import AreaRanking         from '../charts/AreaRanking'
+import IndicatorBreakdown  from '../charts/IndicatorBreakdown'
+import MapView             from '../MapView'
+import MonitoringTimeline  from '../MonitoringTimeline'
 
 import { useMappingData }    from '../../hooks/useMappingData'
 import { useApiProbe }       from '../../hooks/useApiProbe'
@@ -28,8 +28,8 @@ export default function PropertyLevel({ ctx }) {
   const property = ctx?.property ?? {}
   const areas    = mappingData?.areas ?? []
 
-  const propertyEHI = ehiData.latest?.property_ehi_weighted ?? property.ehi ?? null
-  const trendData   = ehiData.trend ?? ctx?.trend ?? null
+  const propertyEHI            = ehiData.latest?.property_ehi_weighted ?? property.ehi ?? null
+  const trendData              = ehiData.trend ?? ctx?.trend ?? null
   const processIndices         = ehiData.latest?.process_indices    ?? null
   const baselineProcessIndices = ehiData.trend?.[0]?.process_indices ?? null
 
@@ -105,10 +105,12 @@ export default function PropertyLevel({ ctx }) {
           compareLabel={ehiData.trend?.[0]?.year_label ?? 'Baseline'}
           source={ehiData.hasData ? 'BELImport.xlsx · strata-weighted' : null}
         />
-        <IndicatorGrid items={areas} title="Areas" emptyText="No areas defined." />
+        <AreaRanking
+          dataset={ehiData.dataset}
+          mappingData={mappingData}
+        />
       </section>
 
-      {/* NEW: per-indicator drill-down */}
       <section>
         <IndicatorBreakdown
           dataset={ehiData.dataset}
