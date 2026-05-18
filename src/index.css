@@ -1,0 +1,68 @@
+@import "tailwindcss";
+
+/* ──────────────────────────────────────────────────────────────────────────
+   GDT theme tokens — recovered from the deployed bundle
+   These get auto-mapped into Tailwind utilities by v4:
+     --color-gdt-green   → text-gdt-green, bg-gdt-green, border-gdt-green
+     --color-gdt-amber   → text-gdt-amber, …
+   etc.
+   ────────────────────────────────────────────────────────────────────────── */
+@theme {
+  --color-gdt-green:     #2d6a4f;
+  --color-gdt-green-mid: #40916c;
+  --color-gdt-green-lt:  #74c69d;
+  --color-gdt-green-bg:  #d8f3dc;
+  --color-gdt-amber:     #e9c46a;
+  --color-gdt-red:       #e76f51;
+  --color-gdt-slate:     #2d3748;
+  --color-gdt-slate-lt:  #718096;
+  --color-gdt-bg:        #f4f7f5;
+  --color-gdt-card:      #ffffff;
+  --color-gdt-border:    #e2ede8;
+
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "DM Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+}
+
+/* ── Base ─────────────────────────────────────────────────────────────── */
+:root {
+  /* Mirror as plain CSS vars too so inline styles in non-Tailwind contexts
+     (Leaflet popups, SVG fills) can use them. */
+  --gdt-green:     #2d6a4f;
+  --gdt-green-mid: #40916c;
+  --gdt-green-lt:  #74c69d;
+  --gdt-green-bg:  #d8f3dc;
+  --gdt-amber:     #e9c46a;
+  --gdt-red:       #e76f51;
+  --gdt-slate:     #2d3748;
+  --gdt-slate-lt:  #718096;
+  --gdt-bg:        #f4f7f5;
+  --gdt-card:      #ffffff;
+  --gdt-border:    #e2ede8;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--gdt-bg);
+  color: var(--gdt-slate);
+  font-family: "DM Sans", sans-serif;
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+}
+
+.card {
+  background: var(--gdt-card);
+  border: 1px solid var(--gdt-border);
+  border-radius: 10px;
+}
+
+/* ── Leaflet patches ──────────────────────────────────────────────────── */
+.leaflet-container {
+  font-family: "DM Sans", sans-serif;
+  background: var(--gdt-green-bg);
+}
+.leaflet-popup-content-wrapper {
+  border-radius: 8px;
+}
