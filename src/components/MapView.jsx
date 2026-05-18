@@ -1,189 +1,223 @@
 /**
- * MapView.jsx
+ * MapView
  *
- * Interactive property map using real spatial data from /api/mapping.
- * - Property boundary drawn from boundary_geojson (no manual KML upload needed)
- * - Geopoint markers at real lat/lng (no synthetic demo positions)
- * - Area boundaries as subtle fills
- * - Markers coloured by EHI score
+ * Leaflet map showing property boundary, area polygons, and monitoring
+ * points colour-coded by EHI. Lazy-loads Leaflet on first render so
+ * SSR/server builds don't choke on `window`.
  *
- * Dependencies:
- *   leaflet, react-leaflet (installed via package.json)
+ * Map controls:
+ *   - Zoom (top-left, default Leaflet)
+ *   - Fit-to-property (top-right, custom) — recentres the map on the
+ *     property boundary at any time. Triggered automatically once on
+ *     first data load too.
  *
- * Usage:
- *   <MapView mappingData={mappingData} loading={loading} error={error} />
+ * EHI colouring comes from lib/colorScale (ehiColor / ehiLabel).
  */
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { ehiColor, ehiLabel } from '../lib/colorScale'
-import {
-  propertyBoundaryGeoJSON,
-  areaBoundaryGeoJSON,
-  geopointMarkers,
-  deriveBounds,
-} from '../lib/spatialUtils'
 
 export default function MapView({ mappingData, loading, error }) {
-  const containerRef = useRef(null)
-  const mapRef       = useRef(null)
-  const layersRef    = useRef([])
-  const [L, setL]    = useState(null)
+  const containerRef        = useRef(null)
+  const mapRef              = useRef(null)
+  const dataLayerRef        = useRef(null)
+  const propertyBoundsRef   = useRef(null)
+  const fitControlRef       = useRef(null)
+  const hasInitialFitRef    = useRef(false)
 
-  // ── Lazy-load Leaflet on mount (browser only) ────────────────────────────
+  /* ─── Initialise map once ──────────────────────────────────────────── */
   useEffect(() => {
+    if (mapRef.current || !containerRef.current) return
     let cancelled = false
-    Promise.all([
-      import('leaflet'),
-      import('leaflet/dist/leaflet.css'),
-    ]).then(([leaflet]) => {
-      if (!cancelled) setL(leaflet.default ?? leaflet)
-    })
-    return () => { cancelled = true }
-  }, [])
 
-  // ── Initialise Leaflet map once L is loaded ──────────────────────────────
-  useEffect(() => {
-    if (!L || !containerRef.current || mapRef.current) return
+    ;(async () => {
+      const L = (await import('leaflet')).default
+      await import('leaflet/dist/leaflet.css')
+      if (cancelled || !containerRef.current) return
 
-    mapRef.current = L.map(containerRef.current, {
-      zoomControl:        true,
-      scrollWheelZoom:    true,
-      attributionControl: true,
-    }).setView([51.5, -1.5], 10)
+      const map = L.map(containerRef.current, {
+        center: [-30, 25],
+        zoom: 5,
+        scrollWheelZoom: true,
+        zoomControl: true,
+      })
 
-    L.tileLayer(
-      'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-      { attribution: '© OpenStreetMap contributors' }
-    ).addTo(mapRef.current)
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 19,
+      }).addTo(map)
+
+      // ── Custom "Fit to property" control ──────────────────────────────
+      const FitControl = L.Control.extend({
+        onAdd() {
+          const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control')
+          const a = L.DomUtil.create('a', '', container)
+          a.href = '#'
+          a.role = 'button'
+          a.title = 'Fit map to property boundary'
+          a.setAttribute('aria-label', 'Fit map to property boundary')
+          a.style.cssText = [
+            'display:flex', 'align-items:center', 'justify-content:center',
+            'width:30px', 'height:30px',
+            'background:white', 'color:#2d3748',
+            'text-decoration:none',
+          ].join(';')
+          // SVG icon: square with corner brackets (universal "fit to view")
+          a.innerHTML = `
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M3 7V3h4"></path>
+              <path d="M21 7V3h-4"></path>
+              <path d="M3 17v4h4"></path>
+              <path d="M21 17v4h-4"></path>
+            </svg>`
+          L.DomEvent.on(a, 'click', (e) => {
+            L.DomEvent.preventDefault(e)
+            L.DomEvent.stopPropagation(e)
+            fitToProperty()
+          })
+          // Stop wheel/double-click bubbling into the map
+          L.DomEvent.disableClickPropagation(container)
+          L.DomEvent.disableScrollPropagation(container)
+          return container
+        },
+      })
+
+      const fitControl = new FitControl({ position: 'topright' })
+      fitControl.addTo(map)
+
+      mapRef.current        = map
+      fitControlRef.current = fitControl
+    })()
 
     return () => {
-      mapRef.current?.remove()
-      mapRef.current = null
+      cancelled = true
+      if (mapRef.current) {
+        mapRef.current.remove()
+        mapRef.current = null
+        dataLayerRef.current = null
+        propertyBoundsRef.current = null
+        fitControlRef.current = null
+        hasInitialFitRef.current = false
+      }
     }
-  }, [L])
+  }, [])
 
-  // ── Draw/update layers when mappingData changes ──────────────────────────
+  /* ─── Render data layers when mappingData updates ──────────────────── */
   useEffect(() => {
-    const map = mapRef.current
-    if (!L || !map || !mappingData) return
+    if (!mapRef.current || !mappingData) return
 
-    layersRef.current.forEach(l => map.removeLayer(l))
-    layersRef.current = []
+    let cancelled = false
+    ;(async () => {
+      const L = (await import('leaflet')).default
+      if (cancelled || !mapRef.current) return
+      const map = mapRef.current
 
-    const { properties = [], areas = [], points = [] } = mappingData
-    const add = layer => { layer.addTo(map); layersRef.current.push(layer) }
+      // Wipe previous data layer (keep tile layer + controls intact)
+      if (dataLayerRef.current) {
+        dataLayerRef.current.clearLayers()
+      } else {
+        dataLayerRef.current = L.layerGroup().addTo(map)
+      }
+      const dataLayer = dataLayerRef.current
 
-    // 1. Property boundary (thick green outline)
-    const propGeoJSON = propertyBoundaryGeoJSON(properties)
-    if (propGeoJSON.features.length) {
-      add(L.geoJSON(propGeoJSON, {
-        style: {
-          color:       '#2d6a4f',
-          weight:      3,
-          opacity:     0.9,
-          fillOpacity: 0.06,
-          fillColor:   '#2d6a4f',
-        },
-        onEachFeature: (feature, layer) => {
-          layer.bindPopup(`<strong>${feature.properties.name}</strong>`)
-        },
-      }))
-    }
+      // ── Property boundary ────────────────────────────────────────────
+      let propertyBounds = null
+      const property = mappingData.properties?.[0]
+      if (property?.boundary_geojson) {
+        const propLayer = L.geoJSON(property.boundary_geojson, {
+          style: { color: '#2d6a4f', fillColor: '#2d6a4f', fillOpacity: 0.05, weight: 2 },
+        }).addTo(dataLayer)
+        propertyBounds = propLayer.getBounds()
+        propLayer.bindPopup(`<b>${property.name ?? 'Property'}</b>`)
+      }
+      propertyBoundsRef.current = propertyBounds
 
-    // 2. Area boundaries (EHI-coloured fills)
-    const areaGeoJSON = areaBoundaryGeoJSON(areas)
-    if (areaGeoJSON.features.length) {
-      add(L.geoJSON(areaGeoJSON, {
-        style: feat => ({
-          color:       '#40916c',
-          weight:      1.5,
-          opacity:     0.7,
-          dashArray:   '4 4',
-          fillOpacity: 0.18,
-          fillColor:   ehiColor(feat.properties.ehi ?? 5),
-        }),
-        onEachFeature: (feature, layer) => {
-          const ehi = feature.properties.ehi
-          layer.bindPopup(
-            `<strong>${feature.properties.name}</strong>` +
-            (ehi != null ? `<br/>EHI ${ehi.toFixed(1)} — ${ehiLabel(ehi)}` : '')
-          )
-        },
-      }))
-    }
+      // ── Areas ────────────────────────────────────────────────────────
+      for (const area of (mappingData.areas ?? [])) {
+        if (!area.boundary_geojson) continue
+        const a = L.geoJSON(area.boundary_geojson, {
+          style: { color: '#40916c', fillColor: '#40916c', fillOpacity: 0.15, weight: 1.5 },
+        }).addTo(dataLayer)
+        a.bindPopup(
+          `<b>${area.name ?? 'Area'}</b>` +
+          (area.area_size != null ? `<br>${area.area_size} ha` : '')
+        )
+      }
 
-    // 3. Geopoint markers
-    const markers = geopointMarkers(points)
-    for (const pt of markers) {
-      const colour = ehiColor(pt.ehi ?? 5)
-      add(L.circleMarker([pt.lat, pt.lng], {
-        radius:      8,
-        fillColor:   colour,
-        color:       '#fff',
-        weight:      2,
-        opacity:     1,
-        fillOpacity: 0.85,
-      }).bindPopup(
-        `<strong>${pt.name}</strong>` +
-        (pt.ehi != null ? `<br/>EHI ${pt.ehi.toFixed(1)} — ${ehiLabel(pt.ehi)}` : '<br/>No EHI score')
-      ))
-    }
+      // ── Monitoring points ────────────────────────────────────────────
+      for (const point of (mappingData.points ?? [])) {
+        if (!point.has_coordinates && (point.lat == null || point.lng == null)) continue
+        const ehi = point.ehi ?? null
+        const fill = ehi == null ? '#888780' : ehiColor(ehi)
+        const marker = L.circleMarker([point.lat, point.lng], {
+          radius: 7,
+          color: 'white',
+          weight: 2,
+          fillColor: fill,
+          fillOpacity: 0.95,
+        }).addTo(dataLayer)
+        marker.bindPopup(
+          `<b>${point.name ?? 'Monitoring point'}</b>` +
+          (ehi != null ? `<br>EHI: ${ehi} (${ehiLabel(ehi)})` : '<br>Unscored')
+        )
+      }
 
-    // 4. Fit map to all features
-    const bounds = deriveBounds({ properties, areas, points })
-    if (bounds) {
-      map.fitBounds(bounds, { padding: [24, 24] })
-    }
+      // ── First-load auto-fit only ─────────────────────────────────────
+      // Don't re-fit on every data refresh, or it'll hijack the user's
+      // pan/zoom. They've got the button if they want to recentre.
+      if (!hasInitialFitRef.current && propertyBounds) {
+        map.fitBounds(propertyBounds, { padding: [30, 30] })
+        hasInitialFitRef.current = true
+      }
+    })()
 
-  }, [L, mappingData])
+    return () => { cancelled = true }
+  }, [mappingData])
 
+  /* ─── Imperative: fit to property ──────────────────────────────────── */
+  function fitToProperty() {
+    const map    = mapRef.current
+    const bounds = propertyBoundsRef.current
+    if (!map || !bounds) return
+    map.fitBounds(bounds, { padding: [30, 30] })
+  }
+
+  /* ─── Render ───────────────────────────────────────────────────────── */
   return (
-    <div className="relative w-full h-full min-h-[380px] rounded-lg overflow-hidden border border-gdt-border">
+    <div className="relative w-full h-full rounded-lg overflow-hidden border border-gdt-border">
       <div ref={containerRef} className="w-full h-full" />
 
-      {(loading || !L) && !error && (
-        <div className="absolute inset-0 flex items-center justify-center bg-white/70 z-[400]">
-          <div className="flex items-center gap-2 text-sm text-gdt-slate">
-            <Spinner /> Loading map data…
-          </div>
+      {loading && (
+        <div className="absolute inset-0 bg-white/60 flex items-center justify-center pointer-events-none z-[400] text-sm text-gdt-slate">
+          Loading map data…
         </div>
       )}
-
       {error && (
-        <div className="absolute inset-0 flex items-center justify-center bg-white/80 z-[400]">
-          <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3 max-w-xs text-center">
-            <div className="font-semibold mb-1">Map data unavailable</div>
-            <div className="text-xs opacity-80">{error}</div>
+        <div className="absolute inset-x-3 top-3 bg-red-50 text-gdt-red text-xs p-2 rounded z-[400]">
+          Map data error: {String(error)}
+        </div>
+      )}
+
+      {/* EHI colour legend overlay */}
+      <div className="absolute bottom-3 right-3 bg-white rounded-md shadow-sm p-2 text-[10px] z-[500] border border-gdt-border">
+        <div className="text-gdt-slate-lt mb-1">EHI colour scale</div>
+        {[
+          { tier: 'Strong',     score:  80 },
+          { tier: 'Good',       score:  50 },
+          { tier: 'Moderate',   score:  15 },
+          { tier: 'Poor',       score: -20 },
+          { tier: 'Critical',   score: -60 },
+        ].map(({ tier, score }) => (
+          <div key={tier} className="flex items-center gap-1.5">
+            <span
+              className="inline-block w-2.5 h-2.5 rounded-full"
+              style={{ backgroundColor: ehiColor(score) }}
+            />
+            <span className="text-gdt-slate">{tier}</span>
           </div>
-        </div>
-      )}
-
-      {mappingData && !loading && (
-        <div className="absolute bottom-3 right-3 z-[400] bg-white/90 backdrop-blur-sm rounded-lg border border-gdt-border px-3 py-2 shadow text-[11px] space-y-1">
-          {[
-            { label: 'Excellent', score: 9 },
-            { label: 'Good',      score: 7 },
-            { label: 'Moderate',  score: 5.5 },
-            { label: 'Poor',      score: 4 },
-            { label: 'Critical',  score: 2 },
-          ].map(({ label, score }) => (
-            <div key={label} className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: ehiColor(score) }} />
-              <span className="text-gdt-slate">{label}</span>
-            </div>
-          ))}
-          <div className="border-t border-gdt-border pt-1 text-gdt-slate-lt">EHI colour scale</div>
-        </div>
-      )}
+        ))}
+      </div>
     </div>
-  )
-}
-
-function Spinner() {
-  return (
-    <svg className="animate-spin w-4 h-4 text-gdt-green" viewBox="0 0 24 24" fill="none">
-      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeOpacity="0.25"/>
-      <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
-    </svg>
   )
 }
