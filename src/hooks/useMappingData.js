@@ -5,9 +5,10 @@
  * Netlify proxy. Forwards api_origin + api_base so the proxy routes to the
  * correct upstream environment.
  *
- * Returns full debug state so the UI can surface what happened on the wire
- * (request URL, status, response body, errors) without needing DevTools.
+ * The GDT API wraps its responses in a `{ data: { properties, areas, points } }`
+ * envelope. We unwrap it here so callers see the bare structure.
  *
+ * Returns full debug state so the UI can surface what happened on the wire.
  *   { mappingData, loading, error, debug }
  *
  * Also publishes debug to window.__gdvMappingDebug for console inspection.
@@ -18,19 +19,34 @@ import { mockMappingData } from '../lib/mockData'
 
 const MOCK_TOKEN = 'mock-token-dev-only'
 
+/**
+ * Unwrap GDT's `{ data: {...} }` envelope. Returns the inner object if
+ * the response looks enveloped, otherwise returns the response unchanged
+ * (so legacy/dev shapes still work).
+ */
+function unwrapEnvelope(json) {
+  if (!json || typeof json !== 'object') return json
+  if (json.data && typeof json.data === 'object'
+      && (json.data.properties || json.data.areas || json.data.points)) {
+    return json.data
+  }
+  return json
+}
+
 export function useMappingData(ctx) {
   const [mappingData, setMappingData] = useState(null)
   const [loading, setLoading]         = useState(false)
   const [error, setError]             = useState(null)
   const [debug, setDebug]             = useState({
-    status:         'idle',          // 'idle' | 'skipped' | 'loading' | 'ok' | 'error'
-    reason:         null,            // why skipped, or short error label
+    status:         'idle',
+    reason:         null,
     requestUrl:     null,
     httpStatus:     null,
     httpStatusText: null,
-    responseText:   null,            // first ~2 KB of response body
+    responseText:   null,
     fetchError:     null,
     ctxSummary:     null,
+    counts:         null,
   })
 
   const propertyApikey = ctx?.property?._apikey ?? ctx?.property?.apikey ?? null
@@ -59,7 +75,6 @@ export function useMappingData(ctx) {
       return
     }
 
-    // Dev-mode shortcut
     if (oauthToken === MOCK_TOKEN) {
       setMappingData(mockMappingData)
       publish({ status: 'skipped', reason: 'using Thornfield mock (dev mode)' })
@@ -90,7 +105,7 @@ export function useMappingData(ctx) {
             requestUrl,
             httpStatus:     res.status,
             httpStatusText: res.statusText,
-            responseText:   text.slice(0, 2000),
+            responseText:   text.slice(0, 4000),
           })
           let errMsg = `HTTP ${res.status}`
           try {
@@ -109,19 +124,28 @@ export function useMappingData(ctx) {
             requestUrl,
             httpStatus:     res.status,
             httpStatusText: res.statusText,
-            responseText:   text.slice(0, 2000),
+            responseText:   text.slice(0, 4000),
             fetchError:     'response was not JSON',
           })
           throw new Error('response was not JSON')
         }
 
-        setMappingData(json)
+        // Unwrap the GDT `data` envelope
+        const unwrapped = unwrapEnvelope(json)
+        setMappingData(unwrapped)
+
         publish({
           status:         'ok',
           requestUrl,
           httpStatus:     res.status,
           httpStatusText: res.statusText,
-          responseText:   text.slice(0, 2000),
+          responseText:   text.slice(0, 4000),
+          counts: {
+            properties: unwrapped?.properties?.length ?? 0,
+            areas:      unwrapped?.areas?.length      ?? 0,
+            points:     unwrapped?.points?.length     ?? 0,
+            envelope:   json !== unwrapped ? 'unwrapped from {data:…}' : 'flat (no envelope)',
+          },
         })
       })
       .catch((err) => {
