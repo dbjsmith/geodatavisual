@@ -2,9 +2,10 @@
  * PropertyLevel — property dashboard.
  *
  * Layout:
- *   ┌─ MappingDebug strip (always visible while embedded) ─┐
- *   ┌─ EHI gauge ─┐  ┌─ Trend chart (12mo) ─┐
- *   ┌─ Property map ────────────────────────────────────────┐
+ *   ┌─ MappingDebug ribbon (collapsible) ─┐
+ *   ┌─ ApiProbe ribbon (collapsible) ─────┐  ← NEW: discovery probe
+ *   ┌─ EHI gauge ─┐  ┌─ Trend chart ──────┐
+ *   ┌─ Property map ─────────────────────────┐
  *   ┌─ Process radar ──┐  ┌─ Area grid ────┐
  */
 
@@ -14,6 +15,7 @@ import ProcessRadar  from '../charts/ProcessRadar'
 import IndicatorGrid from '../charts/IndicatorGrid'
 import MapView       from '../MapView'
 import { useMappingData } from '../../hooks/useMappingData'
+import { useApiProbe }    from '../../hooks/useApiProbe'
 import { mockTrend, mockIndicators } from '../../lib/mockData'
 
 export default function PropertyLevel({ ctx }) {
@@ -39,6 +41,7 @@ export default function PropertyLevel({ ctx }) {
       </header>
 
       <MappingDebugRibbon debug={debug} ctx={ctx} />
+      <ProbeRibbon ctx={ctx} />
 
       <section className="grid grid-cols-1 md:grid-cols-[180px_1fr] gap-4">
         <EHIGauge score={property.ehi} label="Property EHI" />
@@ -73,9 +76,7 @@ export default function PropertyLevel({ ctx }) {
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
- * MappingDebugRibbon — collapsible debug panel for the /api/mapping call.
- * Shows the request URL, status, response body, and ctx summary so we can
- * diagnose live data issues without DevTools.
+ * MappingDebugRibbon — debug for the /api/mapping call.
  * ────────────────────────────────────────────────────────────────────────── */
 function MappingDebugRibbon({ debug, ctx }) {
   const statusColour = {
@@ -105,6 +106,13 @@ function MappingDebugRibbon({ debug, ctx }) {
           </div>
         )}
 
+        {debug?.counts && (
+          <div>
+            <div className="text-gdt-slate font-semibold mb-1">Counts</div>
+            <pre className="bg-gdt-bg p-2 rounded">{JSON.stringify(debug.counts, null, 2)}</pre>
+          </div>
+        )}
+
         {debug?.fetchError && (
           <div>
             <div className="text-gdt-red font-semibold mb-1">Fetch error</div>
@@ -126,18 +134,92 @@ function MappingDebugRibbon({ debug, ctx }) {
         {debug?.ctxSummary && (
           <div>
             <div className="text-gdt-slate font-semibold mb-1">ctx summary</div>
-            <pre className="bg-gdt-bg p-2 rounded">
-              {JSON.stringify(debug.ctxSummary, null, 2)}
-            </pre>
+            <pre className="bg-gdt-bg p-2 rounded">{JSON.stringify(debug.ctxSummary, null, 2)}</pre>
           </div>
         )}
+      </div>
+    </details>
+  )
+}
 
-        <div>
-          <div className="text-gdt-slate font-semibold mb-1">Full ctx</div>
-          <pre className="bg-gdt-bg p-2 rounded max-h-64 overflow-auto whitespace-pre-wrap break-all">
-            {JSON.stringify(ctx, null, 2)}
+/* ──────────────────────────────────────────────────────────────────────────
+ * ProbeRibbon — discovers which GDT OAuth endpoints exist by firing a list
+ * of candidate URLs in parallel via /api/probe. Click each entry to expand
+ * the response body sample.
+ * ────────────────────────────────────────────────────────────────────────── */
+function ProbeRibbon({ ctx }) {
+  const { results, loading, error } = useApiProbe(ctx)
+  const probes = results?.results ?? []
+
+  const okCount    = probes.filter(p => p.ok).length
+  const found404   = probes.filter(p => p.status === 404).length
+  const errorCount = probes.filter(p => !p.ok && p.status !== 404).length
+
+  let headerStatus
+  if (loading)         headerStatus = 'probing…'
+  else if (error)      headerStatus = `error — ${error}`
+  else if (results)    headerStatus = `${okCount} OK · ${found404} not-found · ${errorCount} other (of ${probes.length})`
+  else                 headerStatus = 'idle (need apikey + token)'
+
+  return (
+    <details className="card text-xs">
+      <summary className="cursor-pointer select-none p-3 flex items-center gap-2">
+        <span className="font-semibold text-gdt-slate">🔍 API discovery probe</span>
+        <span className="font-mono text-gdt-slate-lt">{headerStatus}</span>
+      </summary>
+
+      <div className="p-3 pt-0 space-y-2 font-mono text-[11px]">
+        {probes.length === 0 && !loading && !error && (
+          <div className="text-gdt-slate-lt p-2">No results yet.</div>
+        )}
+
+        {probes.map((r, i) => (
+          <ProbeRow key={i} result={r} />
+        ))}
+      </div>
+    </details>
+  )
+}
+
+function ProbeRow({ result: r }) {
+  const statusColour =
+    r.error            ? 'text-gdt-red'    :
+    r.ok               ? 'text-gdt-green'  :
+    r.status === 404   ? 'text-gdt-slate-lt' :
+    r.status >= 400 && r.status < 500 ? 'text-gdt-amber' :
+                                       'text-gdt-red'
+
+  const statusLabel = r.error ? 'ERR' : (r.status ?? '—')
+
+  return (
+    <details className="border border-gdt-border rounded">
+      <summary className="cursor-pointer select-none p-2 flex items-center gap-2">
+        <span className={`font-semibold tabular-nums ${statusColour} w-8`}>{statusLabel}</span>
+        <span className="text-gdt-slate flex-shrink-0">{r.name}</span>
+        <span className="text-gdt-slate-lt text-[10px] truncate" title={r.upstream_url}>
+          {r.upstream_url}
+        </span>
+        {r.time_ms != null && (
+          <span className="text-gdt-slate-lt text-[10px] ml-auto flex-shrink-0">
+            {r.time_ms}ms
+          </span>
+        )}
+      </summary>
+      <div className="p-2 pt-0 space-y-1">
+        {r.error && (
+          <div className="bg-red-50 p-2 rounded break-all">{r.error}</div>
+        )}
+        {r.content_type && (
+          <div className="text-gdt-slate-lt">content-type: {r.content_type}</div>
+        )}
+        {r.body_length != null && (
+          <div className="text-gdt-slate-lt">body length: {r.body_length} bytes</div>
+        )}
+        {r.body_preview && (
+          <pre className="bg-gdt-bg p-2 rounded max-h-48 overflow-auto whitespace-pre-wrap break-all">
+            {r.body_preview}
           </pre>
-        </div>
+        )}
       </div>
     </details>
   )
