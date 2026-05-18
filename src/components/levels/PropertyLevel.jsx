@@ -1,12 +1,9 @@
 /**
  * PropertyLevel — property dashboard.
  *
- * Layout:
- *   ┌─ MappingDebug ribbon (collapsible) ─┐
- *   ┌─ ApiProbe ribbon (collapsible) ─────┐  ← NEW: discovery probe
- *   ┌─ EHI gauge ─┐  ┌─ Trend chart ──────┐
- *   ┌─ Property map ─────────────────────────┐
- *   ┌─ Process radar ──┐  ┌─ Area grid ────┐
+ * The ApiProbe ribbon now passes a sample area_apikey + point_apikey from
+ * the live mapping data, so leaf-scoped probes can run. The probe function
+ * auto-bootstraps a survey_apikey by fetching /oauth/surveys first.
  */
 
 import EHIGauge      from '../charts/EHIGauge'
@@ -26,6 +23,10 @@ export default function PropertyLevel({ ctx }) {
   const indicators = ctx?.indicators ?? mockIndicators
   const areas      = mappingData?.areas ?? []
 
+  // Pull sample apikeys from live mapping data so leaf-scoped probes work
+  const sampleAreaApikey  = mappingData?.areas?.[0]?._apikey  ?? null
+  const samplePointApikey = mappingData?.points?.[0]?._apikey ?? null
+
   return (
     <div className="flex flex-col gap-5 p-5">
       <header className="flex items-end justify-between gap-4">
@@ -41,7 +42,11 @@ export default function PropertyLevel({ ctx }) {
       </header>
 
       <MappingDebugRibbon debug={debug} ctx={ctx} />
-      <ProbeRibbon ctx={ctx} />
+      <ProbeRibbon
+        ctx={ctx}
+        sampleAreaApikey={sampleAreaApikey}
+        samplePointApikey={samplePointApikey}
+      />
 
       <section className="grid grid-cols-1 md:grid-cols-[180px_1fr] gap-4">
         <EHIGauge score={property.ehi} label="Property EHI" />
@@ -143,22 +148,28 @@ function MappingDebugRibbon({ debug, ctx }) {
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
- * ProbeRibbon — discovers which GDT OAuth endpoints exist by firing a list
- * of candidate URLs in parallel via /api/probe. Click each entry to expand
- * the response body sample.
+ * ProbeRibbon — discovers GDT OAuth endpoints by firing a curated list via
+ * /api/probe. Shows bootstrap info (auto-discovered survey_apikey) + each
+ * probe with status, content-type, body length, and response sample.
  * ────────────────────────────────────────────────────────────────────────── */
-function ProbeRibbon({ ctx }) {
-  const { results, loading, error } = useApiProbe(ctx)
-  const probes = results?.results ?? []
+function ProbeRibbon({ ctx, sampleAreaApikey, samplePointApikey }) {
+  const { results, loading, error } = useApiProbe(ctx, {
+    sampleAreaApikey,
+    samplePointApikey,
+  })
 
-  const okCount    = probes.filter(p => p.ok).length
-  const found404   = probes.filter(p => p.status === 404).length
-  const errorCount = probes.filter(p => !p.ok && p.status !== 404).length
+  const probes    = results?.results   ?? []
+  const bootstrap = results?.bootstrap ?? null
+
+  const okCount      = probes.filter(p => p.ok).length
+  const skippedCount = probes.filter(p => p.skipped).length
+  const found404     = probes.filter(p => p.status === 404).length
+  const errorCount   = probes.filter(p => !p.ok && !p.skipped && p.status !== 404).length
 
   let headerStatus
   if (loading)         headerStatus = 'probing…'
   else if (error)      headerStatus = `error — ${error}`
-  else if (results)    headerStatus = `${okCount} OK · ${found404} not-found · ${errorCount} other (of ${probes.length})`
+  else if (results)    headerStatus = `${okCount} OK · ${found404} 404 · ${errorCount} other · ${skippedCount} skipped`
   else                 headerStatus = 'idle (need apikey + token)'
 
   return (
@@ -169,6 +180,15 @@ function ProbeRibbon({ ctx }) {
       </summary>
 
       <div className="p-3 pt-0 space-y-2 font-mono text-[11px]">
+        {bootstrap && (
+          <div className="bg-gdt-bg p-2 rounded text-gdt-slate-lt">
+            <span className="font-semibold text-gdt-slate">bootstrap:</span>{' '}
+            {bootstrap.surveyApikey
+              ? <>discovered survey_apikey <code className="text-gdt-green">{bootstrap.surveyApikey}</code></>
+              : <span className="text-gdt-red">no survey_apikey discovered{bootstrap.error ? ` (${bootstrap.error})` : ''}</span>}
+          </div>
+        )}
+
         {probes.length === 0 && !loading && !error && (
           <div className="text-gdt-slate-lt p-2">No results yet.</div>
         )}
@@ -183,21 +203,25 @@ function ProbeRibbon({ ctx }) {
 
 function ProbeRow({ result: r }) {
   const statusColour =
+    r.skipped          ? 'text-gdt-slate-lt' :
     r.error            ? 'text-gdt-red'    :
     r.ok               ? 'text-gdt-green'  :
     r.status === 404   ? 'text-gdt-slate-lt' :
     r.status >= 400 && r.status < 500 ? 'text-gdt-amber' :
                                        'text-gdt-red'
 
-  const statusLabel = r.error ? 'ERR' : (r.status ?? '—')
+  const statusLabel =
+    r.skipped ? 'SKIP' :
+    r.error   ? 'ERR'  :
+    (r.status ?? '—')
 
   return (
     <details className="border border-gdt-border rounded">
       <summary className="cursor-pointer select-none p-2 flex items-center gap-2">
-        <span className={`font-semibold tabular-nums ${statusColour} w-8`}>{statusLabel}</span>
+        <span className={`font-semibold tabular-nums ${statusColour} w-10`}>{statusLabel}</span>
         <span className="text-gdt-slate flex-shrink-0">{r.name}</span>
         <span className="text-gdt-slate-lt text-[10px] truncate" title={r.upstream_url}>
-          {r.upstream_url}
+          {r.upstream_url ?? (r.reason && `— ${r.reason}`)}
         </span>
         {r.time_ms != null && (
           <span className="text-gdt-slate-lt text-[10px] ml-auto flex-shrink-0">
@@ -206,6 +230,9 @@ function ProbeRow({ result: r }) {
         )}
       </summary>
       <div className="p-2 pt-0 space-y-1">
+        {r.skipped && (
+          <div className="text-gdt-slate-lt">skipped — {r.reason}</div>
+        )}
         {r.error && (
           <div className="bg-red-50 p-2 rounded break-all">{r.error}</div>
         )}

@@ -1,54 +1,55 @@
 /**
  * GET /api/probe
  *
- * Discovery helper for mapping the GDT OAuth API surface. Fires a curated list
- * of likely endpoints in parallel and returns status + body samples so we can
- * see which exist without manually guessing URLs.
+ * Discovery helper for mapping the GDT OAuth API surface. Fires a curated
+ * list of likely endpoints in parallel and returns status + body samples.
  *
- * Used by the ApiProbe panel in the property level view.
+ * Bootstraps a `survey_apikey` automatically by fetching /oauth/surveys
+ * first and using the first entry — so probes that target a specific
+ * survey record can run without the caller supplying one.
  *
  * Query params:
- *   property_apikey  – the property's API key (required, used as substitution)
- *   api_origin       – upstream GDT host (e.g. https://geodatatrack-dev.phpbucket.net)
- *   api_base         – upstream path prefix (e.g. /api/v1)
+ *   property_apikey  – required, used as substitution
+ *   area_apikey      – optional, used for area-scoped probes
+ *   point_apikey     – optional, used for point-scoped probes
+ *   survey_apikey    – optional, used for survey-detail probes
+ *                      (auto-discovered from /oauth/surveys if absent)
+ *   api_origin       – upstream GDT host
+ *   api_base         – upstream path prefix
  *
  * Headers:
  *   Authorization: Bearer <token>   – forwarded to each upstream call
- *
- * Returns: { results: [{ name, upstream_url, status, body_preview, ... }, ...], probed_at }
  */
 
 const DEFAULT_ORIGIN = 'https://app.blueboxonline.com'
 
-/**
- * Probe definitions. Each entry can use `{apikey}` as a placeholder which gets
- * replaced with the property_apikey from the request (URL-encoded in path,
- * raw in query string).
- */
 const PROBES = [
-  // ─── Primary candidates: surveys list for a property ────────────────────
-  { name: 'surveys (property_apikey query)', path: '/oauth/surveys',                       query: { property_apikey: '{apikey}' } },
-  { name: 'surveys (_apikey query)',         path: '/oauth/surveys',                       query: { _apikey: '{apikey}' } },
-  { name: 'surveys (nested REST)',           path: '/oauth/property/{apikey}/surveys' },
-  { name: 'surveys (alt nested)',            path: '/oauth/properties/{apikey}/surveys' },
-  { name: 'surveys (flat)',                  path: '/oauth/property/surveys',              query: { property_apikey: '{apikey}' } },
+  // ─── Confirmed working (kept as sanity baselines) ───────────────────────
+  { name: 'surveys (property, query)',     path: '/oauth/surveys',  query: { property_apikey: '{property_apikey}' } },
+  { name: 'mapping (baseline)',            path: '/oauth/mapping',  query: { property_apikey: '{property_apikey}' } },
+  { name: 'points (baseline)',             path: '/oauth/points',   query: { property_apikey: '{property_apikey}' } },
 
-  // ─── Pre-computed time series (long-shots) ──────────────────────────────
-  { name: 'trends',                          path: '/oauth/trends',                        query: { property_apikey: '{apikey}' } },
-  { name: 'history',                         path: '/oauth/history',                       query: { property_apikey: '{apikey}' } },
+  // ─── Where do scores live? Individual survey detail ─────────────────────
+  { name: 'survey detail (REST)',          path: '/oauth/survey/{survey_apikey}',                                                                      require: 'survey_apikey' },
+  { name: 'survey detail (alt REST)',      path: '/oauth/surveys/{survey_apikey}',                                                                     require: 'survey_apikey' },
+  { name: 'survey detail (query, _apikey)',path: '/oauth/survey',   query: { _apikey: '{survey_apikey}' },                                             require: 'survey_apikey' },
+  { name: 'survey detail (query, apikey)', path: '/oauth/surveys',  query: { _apikey: '{survey_apikey}' },                                             require: 'survey_apikey' },
 
-  // ─── Property detail (may contain inline survey history) ────────────────
-  { name: 'property detail (REST)',          path: '/oauth/property/{apikey}' },
-  { name: 'property detail (query)',         path: '/oauth/property',                      query: { property_apikey: '{apikey}' } },
-  { name: 'properties detail (REST)',        path: '/oauth/properties/{apikey}' },
+  // ─── Leaf-scoped surveys (most likely place actual scores live) ─────────
+  { name: 'surveys by area_apikey',        path: '/oauth/surveys',  query: { area_apikey:  '{area_apikey}' },                                          require: 'area_apikey'  },
+  { name: 'surveys by point_apikey',       path: '/oauth/surveys',  query: { point_apikey: '{point_apikey}' },                                         require: 'point_apikey' },
 
-  // ─── Catalogue / metadata ───────────────────────────────────────────────
-  { name: 'survey types',                    path: '/oauth/survey_types' },
-  { name: 'survey types (alt)',              path: '/oauth/surveys/types' },
+  // ─── Filter/scope params on the property surveys call ───────────────────
+  { name: 'surveys recursive=1',           path: '/oauth/surveys',  query: { property_apikey: '{property_apikey}', recursive: '1' } },
+  { name: 'surveys detail=full',           path: '/oauth/surveys',  query: { property_apikey: '{property_apikey}', detail: 'full' } },
+  { name: 'surveys include=scores',        path: '/oauth/surveys',  query: { property_apikey: '{property_apikey}', include: 'scores' } },
+  { name: 'surveys scope=descendants',     path: '/oauth/surveys',  query: { property_apikey: '{property_apikey}', scope: 'descendants' } },
 
-  // ─── Known working endpoints (sanity baselines) ─────────────────────────
-  { name: 'points (baseline)',               path: '/oauth/points',                        query: { property_apikey: '{apikey}' } },
-  { name: 'mapping (baseline)',              path: '/oauth/mapping',                       query: { property_apikey: '{apikey}' } },
+  // ─── Point/area detail (might bundle their own survey history) ──────────
+  { name: 'point detail (REST)',           path: '/oauth/point/{point_apikey}',                                                                        require: 'point_apikey' },
+  { name: 'point detail (query)',          path: '/oauth/point',    query: { _apikey: '{point_apikey}' },                                              require: 'point_apikey' },
+  { name: 'area detail (REST)',            path: '/oauth/area/{area_apikey}',                                                                          require: 'area_apikey'  },
+  { name: 'area detail (query)',           path: '/oauth/area',     query: { _apikey: '{area_apikey}' },                                               require: 'area_apikey'  },
 ]
 
 export default async (req) => {
@@ -58,11 +59,59 @@ export default async (req) => {
   const apiOrigin = url.searchParams.get('api_origin') || DEFAULT_ORIGIN
   const apiBase   = url.searchParams.get('api_base')   || ''
 
+  const areaApikey  = url.searchParams.get('area_apikey')  || null
+  const pointApikey = url.searchParams.get('point_apikey') || null
+  let   surveyApikey = url.searchParams.get('survey_apikey') || null
+
   if (!apikey) return Response.json({ error: 'property_apikey required' }, { status: 400 })
   if (!auth)   return Response.json({ error: 'Authorization required' },   { status: 401 })
 
-  const results = await Promise.all(PROBES.map(async ({ name, path, query }) => {
-    const interpolatedPath = path.replace('{apikey}', encodeURIComponent(apikey))
+  // ── Bootstrap: auto-discover a survey_apikey from /oauth/surveys ──────
+  const bootstrap = { surveyApikey: null, error: null }
+  if (!surveyApikey) {
+    const bootstrapUrl = `${apiOrigin}${apiBase}/oauth/surveys?property_apikey=${encodeURIComponent(apikey)}`
+    try {
+      const r = await fetch(bootstrapUrl, {
+        headers: { Authorization: auth, Accept: 'application/json' },
+      })
+      if (r.ok) {
+        const j = await r.json()
+        // Response shape from probe round 1: { list: [{ _apikey, ... }, ...] }
+        const first = j?.list?.[0] ?? j?.data?.list?.[0] ?? j?.data?.[0] ?? j?.[0]
+        surveyApikey = first?._apikey ?? null
+        bootstrap.surveyApikey = surveyApikey
+      } else {
+        bootstrap.error = `bootstrap HTTP ${r.status}`
+      }
+    } catch (err) {
+      bootstrap.error = `bootstrap fetch failed: ${err.message}`
+    }
+  } else {
+    bootstrap.surveyApikey = surveyApikey
+    bootstrap.error = '(supplied by caller)'
+  }
+
+  // ── Substitute placeholders, skip probes missing required apikeys ─────
+  const subs = {
+    property_apikey: apikey,
+    area_apikey:     areaApikey,
+    point_apikey:    pointApikey,
+    survey_apikey:   surveyApikey,
+  }
+
+  const substitute = (str, encode = false) =>
+    str.replace(/\{(property_apikey|area_apikey|point_apikey|survey_apikey)\}/g, (_, key) => {
+      const v = subs[key]
+      return v == null ? '' : (encode ? encodeURIComponent(v) : v)
+    })
+
+  const results = await Promise.all(PROBES.map(async ({ name, path, query, require: requiredKey }) => {
+    // Skip probes whose required apikey isn't available
+    if (requiredKey && !subs[requiredKey]) {
+      return { name, skipped: true, reason: `missing ${requiredKey}` }
+    }
+
+    const interpolatedPath = substitute(path, true)
     let upstreamUrl
     try {
       upstreamUrl = new URL(`${apiOrigin}${apiBase}${interpolatedPath}`)
@@ -72,7 +121,7 @@ export default async (req) => {
 
     if (query) {
       for (const [k, v] of Object.entries(query)) {
-        upstreamUrl.searchParams.set(k, String(v).replace('{apikey}', apikey))
+        upstreamUrl.searchParams.set(k, substitute(String(v), false))
       }
     }
 
@@ -88,7 +137,7 @@ export default async (req) => {
         status:       upstream.status,
         ok:           upstream.ok,
         content_type: upstream.headers.get('content-type'),
-        body_preview: text.slice(0, 2000),
+        body_preview: text.slice(0, 3000),
         body_length:  text.length,
         time_ms:      Date.now() - startTime,
       }
@@ -102,7 +151,7 @@ export default async (req) => {
     }
   }))
 
-  return Response.json({ results, probed_at: new Date().toISOString() })
+  return Response.json({ results, bootstrap, probed_at: new Date().toISOString() })
 }
 
 export const config = {

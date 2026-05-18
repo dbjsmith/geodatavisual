@@ -1,9 +1,9 @@
 /**
  * useApiProbe
  *
- * Calls /api/probe with the live ctx (token + apikey + upstream config) to
- * discover which GDT API endpoints exist. Returns the raw probe results for
- * rendering in a debug panel.
+ * Calls /api/probe with the live ctx + sample area/point apikeys (pulled
+ * from mappingData). The probe function bootstraps a survey_apikey
+ * automatically by fetching /oauth/surveys first.
  *
  *   { results, loading, error }
  *
@@ -14,7 +14,11 @@ import { useState, useEffect } from 'react'
 
 const MOCK_TOKEN = 'mock-token-dev-only'
 
-export function useApiProbe(ctx, { enabled = true } = {}) {
+export function useApiProbe(ctx, {
+  enabled         = true,
+  sampleAreaApikey  = null,
+  samplePointApikey = null,
+} = {}) {
   const [results, setResults] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError]     = useState(null)
@@ -34,8 +38,10 @@ export function useApiProbe(ctx, { enabled = true } = {}) {
     setError(null)
 
     const params = new URLSearchParams({ property_apikey: apikey })
-    if (origin) params.set('api_origin', origin)
-    if (base)   params.set('api_base',   base)
+    if (origin)            params.set('api_origin',    origin)
+    if (base)              params.set('api_base',      base)
+    if (sampleAreaApikey)  params.set('area_apikey',   sampleAreaApikey)
+    if (samplePointApikey) params.set('point_apikey',  samplePointApikey)
 
     fetch(`/api/probe?${params.toString()}`, {
       headers: { Authorization: `Bearer ${token}` },
@@ -56,7 +62,7 @@ export function useApiProbe(ctx, { enabled = true } = {}) {
       })
 
     return () => { cancelled = true }
-  }, [apikey, token, origin, base, enabled])
+  }, [apikey, token, origin, base, sampleAreaApikey, samplePointApikey, enabled])
 
   return { results, loading, error }
 }
