@@ -1,29 +1,34 @@
 /**
  * PropertyLevel — property dashboard.
  *
- * The ApiProbe ribbon now passes a sample area_apikey + point_apikey from
- * the live mapping data, so leaf-scoped probes can run. The probe function
- * auto-bootstraps a survey_apikey by fetching /oauth/surveys first.
+ * Adds the new Monitoring Activity Timeline section between the EHI trend
+ * chart and the property map. The timeline shows actual survey activity
+ * across all monitoring points (sourced from /oauth/surveys per point),
+ * while the trend chart above still shows sample data pending Paul's
+ * answer on where survey scores are exposed in the OAuth API.
  */
 
-import EHIGauge      from '../charts/EHIGauge'
-import TrendChart    from '../charts/TrendChart'
-import ProcessRadar  from '../charts/ProcessRadar'
-import IndicatorGrid from '../charts/IndicatorGrid'
-import MapView       from '../MapView'
-import { useMappingData } from '../../hooks/useMappingData'
-import { useApiProbe }    from '../../hooks/useApiProbe'
+import EHIGauge          from '../charts/EHIGauge'
+import TrendChart        from '../charts/TrendChart'
+import ProcessRadar      from '../charts/ProcessRadar'
+import IndicatorGrid     from '../charts/IndicatorGrid'
+import MapView           from '../MapView'
+import MonitoringTimeline from '../MonitoringTimeline'
+import { useMappingData }    from '../../hooks/useMappingData'
+import { useApiProbe }       from '../../hooks/useApiProbe'
+import { useSurveyTimeline } from '../../hooks/useSurveyTimeline'
 import { mockTrend, mockIndicators } from '../../lib/mockData'
 
 export default function PropertyLevel({ ctx }) {
   const { mappingData, loading, error, debug } = useMappingData(ctx)
-  const property = ctx?.property ?? {}
+  const timeline = useSurveyTimeline(ctx, mappingData)
 
+  const property = ctx?.property ?? {}
   const trend      = ctx?.trend      ?? mockTrend
   const indicators = ctx?.indicators ?? mockIndicators
   const areas      = mappingData?.areas ?? []
 
-  // Pull sample apikeys from live mapping data so leaf-scoped probes work
+  // Sample apikeys for the discovery probe (so leaf-scoped probes work)
   const sampleAreaApikey  = mappingData?.areas?.[0]?._apikey  ?? null
   const samplePointApikey = mappingData?.points?.[0]?._apikey ?? null
 
@@ -41,7 +46,7 @@ export default function PropertyLevel({ ctx }) {
         </div>
       </header>
 
-      <MappingDebugRibbon debug={debug} ctx={ctx} />
+      <MappingDebugRibbon debug={debug} />
       <ProbeRibbon
         ctx={ctx}
         sampleAreaApikey={sampleAreaApikey}
@@ -50,7 +55,16 @@ export default function PropertyLevel({ ctx }) {
 
       <section className="grid grid-cols-1 md:grid-cols-[180px_1fr] gap-4">
         <EHIGauge score={property.ehi} label="Property EHI" />
-        <TrendChart data={trend} title="EHI trend" />
+        <TrendChart data={trend} title="EHI trend (sample data — awaiting score endpoint)" />
+      </section>
+
+      <section>
+        <MonitoringTimeline
+          rows={timeline.rows}
+          loading={timeline.loading}
+          error={timeline.error}
+          debug={timeline.debug}
+        />
       </section>
 
       <section>
@@ -81,9 +95,9 @@ export default function PropertyLevel({ ctx }) {
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
- * MappingDebugRibbon — debug for the /api/mapping call.
+ * MappingDebugRibbon — collapsible debug for the /api/mapping call.
  * ────────────────────────────────────────────────────────────────────────── */
-function MappingDebugRibbon({ debug, ctx }) {
+function MappingDebugRibbon({ debug }) {
   const statusColour = {
     idle:    'text-gdt-slate-lt',
     skipped: 'text-gdt-amber',
@@ -148,9 +162,7 @@ function MappingDebugRibbon({ debug, ctx }) {
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
- * ProbeRibbon — discovers GDT OAuth endpoints by firing a curated list via
- * /api/probe. Shows bootstrap info (auto-discovered survey_apikey) + each
- * probe with status, content-type, body length, and response sample.
+ * ProbeRibbon — collapsible API discovery panel.
  * ────────────────────────────────────────────────────────────────────────── */
 function ProbeRibbon({ ctx, sampleAreaApikey, samplePointApikey }) {
   const { results, loading, error } = useApiProbe(ctx, {
