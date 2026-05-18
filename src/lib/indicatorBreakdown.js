@@ -1,39 +1,27 @@
 /**
  * indicatorBreakdown
  *
- * Computes, for each EOV indicator, its strata-size-weighted property
- * average per year across the bundled dataset. Produces baseline →
- * current deltas plus the full year-by-year series, so a sparkline can
- * show whether a change was gradual or abrupt.
+ * Two helpers:
  *
- * Strata weighting matters: a 154 ha point pulls the property mean more
- * than a 5 ha point, and per-indicator deltas should respect that.
+ *   buildIndicatorBreakdown(dataset)
+ *     Strata-weighted property-level series per indicator (existing).
  *
- * Per-indicator entry shape:
- *   {
- *     code:        'FG3',
- *     name:        'FG3 Forbs & Legumes',
- *     processes:   ['community'],
- *     min:         -10,
- *     max:          10,
- *     yearLabels:  ['Baseline (Y0)', 'Year 1 (Y1)', …],
- *     series:      [7.67, 5.67, 5.49, 7.64, 1.21],
- *     baseline:    7.67,
- *     current:     1.21,
- *     delta:       -6.46,
- *     coverage:    1.0,     // fraction of points with non-null data
- *   }
+ *   buildPerPointSeries(dataset, indicatorCode)
+ *     Per-point time series for a single indicator. Used by the
+ *     indicator drill-in to answer "FG3 crashed across the property —
+ *     but did some points hold up?"
+ *
+ *   groupBreakdownByProcess(breakdown)
+ *     Splits indicators into ecosystem-process buckets.
  */
 
 import { PROCESS_ORDER } from './ehiProcesses'
 
+/* ──────────────────────────────────────────────────────────────────────── */
 export function buildIndicatorBreakdown(dataset) {
   if (!dataset?.surveys?.length || !dataset?.indicators?.length) return null
 
   const { surveys, indicators } = dataset
-
-  // Group surveys by year_offset so each year's strata-weighted average
-  // is computed against that year's set of points.
   const byYear = new Map()
   for (const s of surveys) {
     if (!byYear.has(s.year_offset)) byYear.set(s.year_offset, [])
@@ -65,7 +53,6 @@ export function buildIndicatorBreakdown(dataset) {
     const baseline = series[0]
     const current  = series[series.length - 1]
     const delta    = (baseline != null && current != null) ? round2(current - baseline) : null
-    // Worst coverage in any year tells us how trustworthy the trend is overall
     const coverage = Math.min(...points.map(p => p.coverage))
 
     return {
@@ -81,11 +68,51 @@ export function buildIndicatorBreakdown(dataset) {
   })
 }
 
+/* ──────────────────────────────────────────────────────────────────────── */
 /**
- * Group indicators by ecosystem process, sorted by absolute delta within
- * each group (biggest changes first). An indicator that contributes to
- * multiple processes appears in multiple groups.
+ * For a single indicator code, return one row per monitoring point with
+ * that point's 5-year series + baseline/current/delta. Sorted by absolute
+ * delta descending (biggest movers first) so "which points dropped the
+ * most" reads at the top.
+ *
+ * Returns: [{ pointName, strataHa, series, yearLabels, baseline, current, delta }, …]
  */
+export function buildPerPointSeries(dataset, indicatorCode) {
+  if (!dataset?.surveys?.length || !indicatorCode) return null
+
+  const byYear = new Map()
+  for (const s of dataset.surveys) {
+    if (!byYear.has(s.year_offset)) byYear.set(s.year_offset, [])
+    byYear.get(s.year_offset).push(s)
+  }
+  const yearOffsets = [...byYear.keys()].sort((a, b) => a - b)
+  const yearLabels  = yearOffsets.map(o => byYear.get(o)[0].year_label)
+  const pointNames  = [...new Set(dataset.surveys.map(s => s.point_name))]
+
+  return pointNames
+    .map((name) => {
+      const series = yearOffsets.map((o) => {
+        const match = byYear.get(o).find(x => x.point_name === name)
+        return match ? match.indicators?.[indicatorCode] ?? null : null
+      })
+      const baseline = series[0]
+      const current  = series[series.length - 1]
+      const delta    = (baseline != null && current != null) ? current - baseline : null
+      const firstSurvey = dataset.surveys.find(s => s.point_name === name)
+      return {
+        pointName:  name,
+        strataHa:   firstSurvey?.strata_size_ha ?? null,
+        series,
+        yearLabels,
+        baseline,
+        current,
+        delta,
+      }
+    })
+    .sort((a, b) => Math.abs(b.delta ?? 0) - Math.abs(a.delta ?? 0))
+}
+
+/* ──────────────────────────────────────────────────────────────────────── */
 export function groupBreakdownByProcess(breakdown) {
   if (!breakdown) return null
   const groups = {}
