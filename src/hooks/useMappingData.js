@@ -2,15 +2,15 @@
  * useMappingData
  *
  * Fetches spatial data from the GDT mapping endpoint via the /api/mapping
- * Netlify proxy, using the OAuth token + property apikey supplied by the
- * BlueBox host. Also forwards api_origin + api_base so the proxy can route
- * to the correct upstream environment (dev vs prod).
+ * Netlify proxy. Forwards api_origin + api_base so the proxy routes to the
+ * correct upstream environment.
  *
- * Dev-mode shortcut: when the token is the placeholder used by mockContext,
- * we skip the network call and return Thornfield mock data — keeps
- * `npm run dev` working without a live host.
+ * Returns full debug state so the UI can surface what happened on the wire
+ * (request URL, status, response body, errors) without needing DevTools.
  *
- * Returns: { mappingData, loading, error }
+ *   { mappingData, loading, error, debug }
+ *
+ * Also publishes debug to window.__gdvMappingDebug for console inspection.
  */
 
 import { useState, useEffect } from 'react'
@@ -22,6 +22,16 @@ export function useMappingData(ctx) {
   const [mappingData, setMappingData] = useState(null)
   const [loading, setLoading]         = useState(false)
   const [error, setError]             = useState(null)
+  const [debug, setDebug]             = useState({
+    status:         'idle',          // 'idle' | 'skipped' | 'loading' | 'ok' | 'error'
+    reason:         null,            // why skipped, or short error label
+    requestUrl:     null,
+    httpStatus:     null,
+    httpStatusText: null,
+    responseText:   null,            // first ~2 KB of response body
+    fetchError:     null,
+    ctxSummary:     null,
+  })
 
   const propertyApikey = ctx?.property?._apikey ?? ctx?.property?.apikey ?? null
   const oauthToken     = ctx?.oauth_token ?? ctx?.token ?? null
@@ -29,11 +39,30 @@ export function useMappingData(ctx) {
   const apiBase        = ctx?.api_base    ?? ''
 
   useEffect(() => {
-    if (!propertyApikey || !oauthToken) return
+    const ctxSummary = {
+      hasPropertyApikey: !!propertyApikey,
+      propertyApikey:    propertyApikey ? propertyApikey.slice(0, 8) + '…' : null,
+      hasOauthToken:     !!oauthToken,
+      oauthTokenPrefix:  oauthToken ? oauthToken.slice(0, 8) + '…' : null,
+      apiOrigin,
+      apiBase,
+    }
 
-    // Dev-mode shortcut — no real fetch.
+    const publish = (next) => {
+      const merged = { ...next, ctxSummary }
+      setDebug(merged)
+      if (typeof window !== 'undefined') window.__gdvMappingDebug = merged
+    }
+
+    if (!propertyApikey || !oauthToken) {
+      publish({ status: 'skipped', reason: 'missing propertyApikey or oauthToken' })
+      return
+    }
+
+    // Dev-mode shortcut
     if (oauthToken === MOCK_TOKEN) {
       setMappingData(mockMappingData)
+      publish({ status: 'skipped', reason: 'using Thornfield mock (dev mode)' })
       return
     }
 
@@ -44,19 +73,65 @@ export function useMappingData(ctx) {
     const params = new URLSearchParams({ property_apikey: propertyApikey })
     if (apiOrigin) params.set('api_origin', apiOrigin)
     if (apiBase)   params.set('api_base',   apiBase)
+    const requestUrl = `/api/mapping?${params.toString()}`
 
-    fetch(`/api/mapping?${params.toString()}`, {
+    publish({ status: 'loading', requestUrl })
+
+    fetch(requestUrl, {
       headers: { Authorization: `Bearer ${oauthToken}` },
     })
-      .then(res => {
-        if (!res.ok) return res.json().then(e => { throw new Error(e.error || res.statusText) })
-        return res.json()
+      .then(async (res) => {
+        const text = await res.text()
+        if (cancelled) return
+
+        if (!res.ok) {
+          publish({
+            status:         'error',
+            requestUrl,
+            httpStatus:     res.status,
+            httpStatusText: res.statusText,
+            responseText:   text.slice(0, 2000),
+          })
+          let errMsg = `HTTP ${res.status}`
+          try {
+            const j = JSON.parse(text)
+            errMsg = j.error ? `${errMsg} — ${j.error}` : errMsg
+          } catch { /* not JSON */ }
+          throw new Error(errMsg)
+        }
+
+        let json = null
+        try {
+          json = JSON.parse(text)
+        } catch (e) {
+          publish({
+            status:         'error',
+            requestUrl,
+            httpStatus:     res.status,
+            httpStatusText: res.statusText,
+            responseText:   text.slice(0, 2000),
+            fetchError:     'response was not JSON',
+          })
+          throw new Error('response was not JSON')
+        }
+
+        setMappingData(json)
+        publish({
+          status:         'ok',
+          requestUrl,
+          httpStatus:     res.status,
+          httpStatusText: res.statusText,
+          responseText:   text.slice(0, 2000),
+        })
       })
-      .then(data => {
-        if (!cancelled) setMappingData(data)
-      })
-      .catch(err => {
-        if (!cancelled) setError(err.message)
+      .catch((err) => {
+        if (cancelled) return
+        setError(err.message)
+        publish({
+          status:     'error',
+          requestUrl,
+          fetchError: err.message,
+        })
       })
       .finally(() => {
         if (!cancelled) setLoading(false)
@@ -65,5 +140,5 @@ export function useMappingData(ctx) {
     return () => { cancelled = true }
   }, [propertyApikey, oauthToken, apiOrigin, apiBase])
 
-  return { mappingData, loading, error }
+  return { mappingData, loading, error, debug }
 }
