@@ -1,0 +1,2236 @@
+{
+  "schema_version": 1,
+  "source": "BELImport.xlsx (Y0 baseline 2021-02 through Y4 2025-02)",
+  "notes": [
+    "EHI = sum of 15 EOV indicators (Chapter 4 Table 1). Theoretical range -120 to +120 for non-brittle environments.",
+    "BEL is in the Drought Corridor ecoregion \u2014 brittle environment. Tier thresholds (>65 strong, 30-65 reasonable, 0-30 moderate, <0 degrading) come from the EOV 3.0 manual non-brittle section; brittle thresholds may shift.",
+    "Property-level EHI is the strata-size-weighted average of point EHI scores per year.",
+    "Year 2 in the source spreadsheet was data-entry-dated 2025-02-05 but the corresponding GDT API surveys land at 2023-05-02 \u2014 corrected here."
+  ],
+  "property": {
+    "code": "BEL",
+    "apikey": "97864814fa7b7f5fe26c02808bbcdd33",
+    "name": "WL Bell Farming Pty Ltd & Highland Farm Trust",
+    "owner": "Luke Bell",
+    "country": "South Africa",
+    "province": "Eastern Cape",
+    "closest_town": "Molteno",
+    "total_hectares": 3300,
+    "ecoregion": "Drought Corridor",
+    "is_brittle": true,
+    "products": "Wool Sheep,Beef Cattle",
+    "partner": "TruQuest",
+    "year_added": 2021,
+    "years_verified": "2021,2022,2023,2024",
+    "first_visit_iso": "2021-02-17"
+  },
+  "indicators": [
+    {
+      "code": "LCA",
+      "name": "Live Canopy Abundance",
+      "type": "relative",
+      "min": -10,
+      "max": 10,
+      "processes": [
+        "energy"
+      ]
+    },
+    {
+      "code": "LO",
+      "name": "Living Organisms (microfauna)",
+      "type": "absolute",
+      "min": -10,
+      "max": 10,
+      "processes": [
+        "community"
+      ]
+    },
+    {
+      "code": "FG1",
+      "name": "FG1 Warm Season Grasses",
+      "type": "relative",
+      "min": -10,
+      "max": 10,
+      "processes": [
+        "community"
+      ]
+    },
+    {
+      "code": "FG2",
+      "name": "FG2 Cool Season Grasses",
+      "type": "relative",
+      "min": -10,
+      "max": 10,
+      "processes": [
+        "community"
+      ]
+    },
+    {
+      "code": "FG3",
+      "name": "FG3 Forbs & Legumes",
+      "type": "relative",
+      "min": -10,
+      "max": 10,
+      "processes": [
+        "community"
+      ]
+    },
+    {
+      "code": "FG4",
+      "name": "FG4 Trees & Shrubs",
+      "type": "relative",
+      "min": -10,
+      "max": 10,
+      "processes": [
+        "community"
+      ]
+    },
+    {
+      "code": "CDS",
+      "name": "Contextually Desirable rare Species",
+      "type": "relative",
+      "min": 0,
+      "max": 10,
+      "processes": [
+        "community"
+      ]
+    },
+    {
+      "code": "CUS",
+      "name": "Contextually Undesirable Species",
+      "type": "relative",
+      "min": -10,
+      "max": 0,
+      "processes": [
+        "community"
+      ]
+    },
+    {
+      "code": "LA",
+      "name": "Litter Abundance",
+      "type": "relative",
+      "min": 0,
+      "max": 10,
+      "processes": [
+        "water",
+        "mineral"
+      ]
+    },
+    {
+      "code": "LI",
+      "name": "Litter Decomposition",
+      "type": "absolute",
+      "min": 0,
+      "max": 10,
+      "processes": [
+        "mineral"
+      ]
+    },
+    {
+      "code": "DD",
+      "name": "Dung Decomposition",
+      "type": "absolute",
+      "min": 0,
+      "max": 10,
+      "processes": [
+        "mineral"
+      ]
+    },
+    {
+      "code": "BS",
+      "name": "Bare Soil",
+      "type": "relative",
+      "min": -20,
+      "max": 20,
+      "processes": [
+        "water",
+        "mineral",
+        "energy"
+      ]
+    },
+    {
+      "code": "C",
+      "name": "Capping (soil surface crusting)",
+      "type": "absolute",
+      "min": -10,
+      "max": 0,
+      "processes": [
+        "water"
+      ]
+    },
+    {
+      "code": "WIE",
+      "name": "Wind Erosion",
+      "type": "absolute",
+      "min": -10,
+      "max": 0,
+      "processes": [
+        "water"
+      ]
+    },
+    {
+      "code": "WAE",
+      "name": "Water Erosion",
+      "type": "absolute",
+      "min": -10,
+      "max": 0,
+      "processes": [
+        "water"
+      ]
+    }
+  ],
+  "ehi_tiers": [
+    {
+      "min": 65,
+      "max": 200,
+      "label": "Strong",
+      "description": "Close to ecoregion potential",
+      "colour": "#1D9E75"
+    },
+    {
+      "min": 30,
+      "max": 65,
+      "label": "Reasonable",
+      "description": "Reasonable ecosystem function",
+      "colour": "#97C459"
+    },
+    {
+      "min": 0,
+      "max": 30,
+      "label": "Moderate",
+      "description": "Moderate departure from potential",
+      "colour": "#EF9F27"
+    },
+    {
+      "min": -200,
+      "max": 0,
+      "label": "Degrading",
+      "description": "Ineffective processes / degradation",
+      "colour": "#E24B4A"
+    }
+  ],
+  "surveys": [
+    {
+      "year_label": "Baseline (Y0)",
+      "year_offset": 0,
+      "date": "2021-02-16",
+      "site_num": 1,
+      "point_name": "E3",
+      "lat": -31.41895,
+      "lng": 26.78038,
+      "strata_size_ha": 10,
+      "indicators": {
+        "LCA": 5,
+        "LO": 10,
+        "FG1": 10,
+        "FG2": 10,
+        "FG3": 10,
+        "FG4": 5,
+        "CDS": 0,
+        "CUS": 0,
+        "LA": 5,
+        "LI": 5,
+        "DD": 10,
+        "BS": 10,
+        "C": 0,
+        "WIE": 0,
+        "WAE": -10
+      },
+      "ehi": 70,
+      "photos": [
+        "Y0BELST1.1",
+        "Y0BELST1.3 "
+      ],
+      "process_indices": {
+        "water": 65.0,
+        "mineral": 68.8,
+        "energy": 75.0,
+        "community": 82.1
+      }
+    },
+    {
+      "year_label": "Baseline (Y0)",
+      "year_offset": 0,
+      "date": "2021-02-16",
+      "site_num": "=C2+1",
+      "point_name": "A1",
+      "lat": -31.38678,
+      "lng": 26.74663,
+      "strata_size_ha": 75,
+      "indicators": {
+        "LCA": 10,
+        "LO": 5,
+        "FG1": 5,
+        "FG2": 10,
+        "FG3": 5,
+        "FG4": -10,
+        "CDS": 0,
+        "CUS": 0,
+        "LA": 10,
+        "LI": 5,
+        "DD": 5,
+        "BS": 20,
+        "C": 0,
+        "WIE": 0,
+        "WAE": 0
+      },
+      "ehi": 65,
+      "photos": [
+        "Y0BELST2.1",
+        "Y0BELST2.3 "
+      ],
+      "process_indices": {
+        "water": 100.0,
+        "mineral": 75.0,
+        "energy": 100.0,
+        "community": 60.7
+      }
+    },
+    {
+      "year_label": "Baseline (Y0)",
+      "year_offset": 0,
+      "date": "2021-02-16",
+      "site_num": "=C3+1",
+      "point_name": "B4",
+      "lat": -31.41006,
+      "lng": 26.76693,
+      "strata_size_ha": 38,
+      "indicators": {
+        "LCA": 10,
+        "LO": 10,
+        "FG1": 10,
+        "FG2": 5,
+        "FG3": 5,
+        "FG4": -10,
+        "CDS": 0,
+        "CUS": 0,
+        "LA": 10,
+        "LI": 10,
+        "DD": 10,
+        "BS": 20,
+        "C": 0,
+        "WIE": 0,
+        "WAE": 0
+      },
+      "ehi": 80,
+      "photos": [
+        "Y0BELST3.1",
+        "Y0BELST3.3 "
+      ],
+      "process_indices": {
+        "water": 100.0,
+        "mineral": 100.0,
+        "energy": 100.0,
+        "community": 64.3
+      }
+    },
+    {
+      "year_label": "Baseline (Y0)",
+      "year_offset": 0,
+      "date": "2021-02-16",
+      "site_num": "=C4+1",
+      "point_name": "D1",
+      "lat": -31.4221,
+      "lng": 26.78013,
+      "strata_size_ha": 43,
+      "indicators": {
+        "LCA": 10,
+        "LO": 10,
+        "FG1": 10,
+        "FG2": 10,
+        "FG3": 10,
+        "FG4": -10,
+        "CDS": 0,
+        "CUS": 0,
+        "LA": 10,
+        "LI": 10,
+        "DD": 5,
+        "BS": 20,
+        "C": 0,
+        "WIE": 0,
+        "WAE": 0
+      },
+      "ehi": 85,
+      "photos": [
+        "Y0BELST4.1",
+        "Y0BELST4.3 "
+      ],
+      "process_indices": {
+        "water": 100.0,
+        "mineral": 87.5,
+        "energy": 100.0,
+        "community": 71.4
+      }
+    },
+    {
+      "year_label": "Baseline (Y0)",
+      "year_offset": 0,
+      "date": "2021-02-16",
+      "site_num": "=C5+1",
+      "point_name": "Perde Camp 4",
+      "lat": -31.38818,
+      "lng": 26.76439,
+      "strata_size_ha": 50,
+      "indicators": {
+        "LCA": 5,
+        "LO": 5,
+        "FG1": 5,
+        "FG2": 5,
+        "FG3": 5,
+        "FG4": -10,
+        "CDS": 0,
+        "CUS": 0,
+        "LA": 5,
+        "LI": 10,
+        "DD": 5,
+        "BS": 20,
+        "C": 0,
+        "WIE": 0,
+        "WAE": 0
+      },
+      "ehi": 55,
+      "photos": [
+        "Y0BELST5.1",
+        "Y0BELST5.3 "
+      ],
+      "process_indices": {
+        "water": 90.0,
+        "mineral": 75.0,
+        "energy": 87.5,
+        "community": 57.1
+      }
+    },
+    {
+      "year_label": "Baseline (Y0)",
+      "year_offset": 0,
+      "date": "2021-02-16",
+      "site_num": "=C6+1",
+      "point_name": "SL6B",
+      "lat": -31.399,
+      "lng": 26.78065,
+      "strata_size_ha": 5,
+      "indicators": {
+        "LCA": -5,
+        "LO": 0,
+        "FG1": -10,
+        "FG2": 0,
+        "FG3": 5,
+        "FG4": -10,
+        "CDS": 0,
+        "CUS": 0,
+        "LA": 0,
+        "LI": 0,
+        "DD": 5,
+        "BS": 0,
+        "C": 0,
+        "WIE": 0,
+        "WAE": 0
+      },
+      "ehi": -15,
+      "photos": [
+        "Y0BELST6.1",
+        "Y0BELST6.3 "
+      ],
+      "process_indices": {
+        "water": 70.0,
+        "mineral": 25.0,
+        "energy": 37.5,
+        "community": 39.3
+      }
+    },
+    {
+      "year_label": "Baseline (Y0)",
+      "year_offset": 0,
+      "date": "2021-02-16",
+      "site_num": "=C7+1",
+      "point_name": "E2",
+      "lat": -31.39401,
+      "lng": 26.77195,
+      "strata_size_ha": 40,
+      "indicators": {
+        "LCA": 0,
+        "LO": 0,
+        "FG1": -10,
+        "FG2": 10,
+        "FG3": -5,
+        "FG4": 0,
+        "CDS": 0,
+        "CUS": 0,
+        "LA": 0,
+        "LI": 0,
+        "DD": 0,
+        "BS": 10,
+        "C": 0,
+        "WIE": 0,
+        "WAE": 0
+      },
+      "ehi": 5,
+      "photos": [
+        "Y0BELST7.1",
+        "Y0BELST7.3 "
+      ],
+      "process_indices": {
+        "water": 75.0,
+        "mineral": 18.8,
+        "energy": 62.5,
+        "community": 46.4
+      }
+    },
+    {
+      "year_label": "Baseline (Y0)",
+      "year_offset": 0,
+      "date": "2021-02-16",
+      "site_num": "=C8+1",
+      "point_name": "LL3",
+      "lat": -31.41911,
+      "lng": 26.84556,
+      "strata_size_ha": 148,
+      "indicators": {
+        "LCA": 5,
+        "LO": 10,
+        "FG1": 5,
+        "FG2": 10,
+        "FG3": 10,
+        "FG4": -10,
+        "CDS": 0,
+        "CUS": 0,
+        "LA": 5,
+        "LI": 10,
+        "DD": 10,
+        "BS": 20,
+        "C": 0,
+        "WIE": 0,
+        "WAE": 0
+      },
+      "ehi": 75,
+      "photos": [
+        "Y0BELST8.1",
+        "Y0BELST8.3 "
+      ],
+      "process_indices": {
+        "water": 90.0,
+        "mineral": 87.5,
+        "energy": 87.5,
+        "community": 67.9
+      }
+    },
+    {
+      "year_label": "Baseline (Y0)",
+      "year_offset": 0,
+      "date": "2021-02-16",
+      "site_num": "=C9+1",
+      "point_name": "LL2",
+      "lat": -31.42559,
+      "lng": 26.83778,
+      "strata_size_ha": 154,
+      "indicators": {
+        "LCA": 5,
+        "LO": 10,
+        "FG1": 10,
+        "FG2": 10,
+        "FG3": 10,
+        "FG4": -10,
+        "CDS": 0,
+        "CUS": 0,
+        "LA": 5,
+        "LI": 10,
+        "DD": 10,
+        "BS": 20,
+        "C": 0,
+        "WIE": 0,
+        "WAE": 0
+      },
+      "ehi": 80,
+      "photos": [
+        "Y0BELST9.1",
+        "Y0BELST9.3 "
+      ],
+      "process_indices": {
+        "water": 90.0,
+        "mineral": 87.5,
+        "energy": 87.5,
+        "community": 71.4
+      }
+    },
+    {
+      "year_label": "Baseline (Y0)",
+      "year_offset": 0,
+      "date": "2021-02-16",
+      "site_num": "=C10+1",
+      "point_name": "LL5a",
+      "lat": -31.41715,
+      "lng": 26.82392,
+      "strata_size_ha": 55,
+      "indicators": {
+        "LCA": 10,
+        "LO": 10,
+        "FG1": 10,
+        "FG2": 5,
+        "FG3": 10,
+        "FG4": -10,
+        "CDS": 0,
+        "CUS": 0,
+        "LA": 10,
+        "LI": 10,
+        "DD": 5,
+        "BS": 20,
+        "C": 0,
+        "WIE": 0,
+        "WAE": 0
+      },
+      "ehi": 80,
+      "photos": [
+        "Y0BELST10.1",
+        "Y0BELST10.3 "
+      ],
+      "process_indices": {
+        "water": 100.0,
+        "mineral": 87.5,
+        "energy": 100.0,
+        "community": 67.9
+      }
+    },
+    {
+      "year_label": "Year 1 (Y1)",
+      "year_offset": 1,
+      "date": "2022-02-07",
+      "site_num": 1,
+      "point_name": "E3",
+      "lat": -31.41895,
+      "lng": 26.78038,
+      "strata_size_ha": 10,
+      "indicators": {
+        "LCA": 5,
+        "LO": 5,
+        "FG1": 0,
+        "FG2": 10,
+        "FG3": 10,
+        "FG4": 5,
+        "CDS": 0,
+        "CUS": -5,
+        "LA": 0,
+        "LI": 0,
+        "DD": 5,
+        "BS": 0,
+        "C": -5,
+        "WIE": 0,
+        "WAE": -10
+      },
+      "ehi": 20,
+      "photos": [
+        "Y1BELST1.1",
+        "Y1BELST1.3 "
+      ],
+      "process_indices": {
+        "water": 40.0,
+        "mineral": 25.0,
+        "energy": 62.5,
+        "community": 64.3
+      }
+    },
+    {
+      "year_label": "Year 1 (Y1)",
+      "year_offset": 1,
+      "date": "2022-02-07",
+      "site_num": "=C2+1",
+      "point_name": "A1",
+      "lat": -31.38678,
+      "lng": 26.74663,
+      "strata_size_ha": 75,
+      "indicators": {
+        "LCA": 5,
+        "LO": 10,
+        "FG1": 10,
+        "FG2": 10,
+        "FG3": 0,
+        "FG4": -10,
+        "CDS": 10,
+        "CUS": 0,
+        "LA": 10,
+        "LI": 10,
+        "DD": 5,
+        "BS": 20,
+        "C": 0,
+        "WIE": 0,
+        "WAE": 0
+      },
+      "ehi": 80,
+      "photos": [
+        "Y1BELST2.1",
+        "Y1BELST2.3 "
+      ],
+      "process_indices": {
+        "water": 100.0,
+        "mineral": 87.5,
+        "energy": 87.5,
+        "community": 78.6
+      }
+    },
+    {
+      "year_label": "Year 1 (Y1)",
+      "year_offset": 1,
+      "date": "2022-02-07",
+      "site_num": "=C3+1",
+      "point_name": "B4",
+      "lat": -31.41006,
+      "lng": 26.76693,
+      "strata_size_ha": 38,
+      "indicators": {
+        "LCA": 10,
+        "LO": 10,
+        "FG1": 5,
+        "FG2": 10,
+        "FG3": -5,
+        "FG4": -10,
+        "CDS": 10,
+        "CUS": 0,
+        "LA": 10,
+        "LI": 10,
+        "DD": 10,
+        "BS": 20,
+        "C": 0,
+        "WIE": 0,
+        "WAE": 0
+      },
+      "ehi": 80,
+      "photos": [
+        "Y1BELST3.1",
+        "Y1BELST3.3 "
+      ],
+      "process_indices": {
+        "water": 100.0,
+        "mineral": 100.0,
+        "energy": 100.0,
+        "community": 71.4
+      }
+    },
+    {
+      "year_label": "Year 1 (Y1)",
+      "year_offset": 1,
+      "date": "2022-02-07",
+      "site_num": "=C4+1",
+      "point_name": "D1",
+      "lat": -31.4221,
+      "lng": 26.78013,
+      "strata_size_ha": 43,
+      "indicators": {
+        "LCA": 5,
+        "LO": 5,
+        "FG1": 5,
+        "FG2": 5,
+        "FG3": 0,
+        "FG4": -10,
+        "CDS": 0,
+        "CUS": 0,
+        "LA": 5,
+        "LI": 10,
+        "DD": 10,
+        "BS": 20,
+        "C": 0,
+        "WIE": 0,
+        "WAE": 0
+      },
+      "ehi": 55,
+      "photos": [
+        "Y1BELST4.1",
+        "Y1BELST4.3 "
+      ],
+      "process_indices": {
+        "water": 90.0,
+        "mineral": 87.5,
+        "energy": 87.5,
+        "community": 53.6
+      }
+    },
+    {
+      "year_label": "Year 1 (Y1)",
+      "year_offset": 1,
+      "date": "2022-02-07",
+      "site_num": "=C5+1",
+      "point_name": "Perde Camp 4",
+      "lat": -31.38818,
+      "lng": 26.76439,
+      "strata_size_ha": 50,
+      "indicators": {
+        "LCA": 5,
+        "LO": 10,
+        "FG1": 0,
+        "FG2": -10,
+        "FG3": 0,
+        "FG4": -10,
+        "CDS": 0,
+        "CUS": -10,
+        "LA": 0,
+        "LI": 5,
+        "DD": 0,
+        "BS": 10,
+        "C": -10,
+        "WIE": 0,
+        "WAE": 0
+      },
+      "ehi": -10,
+      "photos": [
+        "Y1BELST5.1",
+        "Y1BELST5.3 "
+      ],
+      "process_indices": {
+        "water": 55.0,
+        "mineral": 31.2,
+        "energy": 75.0,
+        "community": 28.6
+      }
+    },
+    {
+      "year_label": "Year 1 (Y1)",
+      "year_offset": 1,
+      "date": "2022-02-07",
+      "site_num": "=C6+1",
+      "point_name": "SL6B",
+      "lat": -31.399,
+      "lng": 26.78065,
+      "strata_size_ha": 5,
+      "indicators": {
+        "LCA": 0,
+        "LO": 10,
+        "FG1": 0,
+        "FG2": 0,
+        "FG3": 5,
+        "FG4": -10,
+        "CDS": 0,
+        "CUS": 0,
+        "LA": 0,
+        "LI": 0,
+        "DD": 10,
+        "BS": -20,
+        "C": -5,
+        "WIE": 0,
+        "WAE": 0
+      },
+      "ehi": -10,
+      "photos": [
+        "Y1BELST6.1",
+        "Y1BELST6.3 "
+      ],
+      "process_indices": {
+        "water": 50.0,
+        "mineral": 25.0,
+        "energy": 25.0,
+        "community": 53.6
+      }
+    },
+    {
+      "year_label": "Year 1 (Y1)",
+      "year_offset": 1,
+      "date": "2022-02-07",
+      "site_num": "=C7+1",
+      "point_name": "E2",
+      "lat": -31.39401,
+      "lng": 26.77195,
+      "strata_size_ha": 40,
+      "indicators": {
+        "LCA": 0,
+        "LO": 10,
+        "FG1": 0,
+        "FG2": -10,
+        "FG3": 0,
+        "FG4": 5,
+        "CDS": 0,
+        "CUS": -5,
+        "LA": 0,
+        "LI": 10,
+        "DD": 5,
+        "BS": 10,
+        "C": 0,
+        "WIE": 0,
+        "WAE": 0
+      },
+      "ehi": 25,
+      "photos": [
+        "Y1BELST7.1",
+        "Y1BELST7.3 "
+      ],
+      "process_indices": {
+        "water": 75.0,
+        "mineral": 56.2,
+        "energy": 62.5,
+        "community": 46.4
+      }
+    },
+    {
+      "year_label": "Year 1 (Y1)",
+      "year_offset": 1,
+      "date": "2022-02-07",
+      "site_num": "=C8+1",
+      "point_name": "LL3",
+      "lat": -31.41911,
+      "lng": 26.84556,
+      "strata_size_ha": 148,
+      "indicators": {
+        "LCA": 5,
+        "LO": 10,
+        "FG1": 5,
+        "FG2": 5,
+        "FG3": 10,
+        "FG4": -10,
+        "CDS": 10,
+        "CUS": 0,
+        "LA": 10,
+        "LI": 10,
+        "DD": 10,
+        "BS": 20,
+        "C": 0,
+        "WIE": 0,
+        "WAE": 0
+      },
+      "ehi": 85,
+      "photos": [
+        "Y1BELST8.1",
+        "Y1BELST8.3 "
+      ],
+      "process_indices": {
+        "water": 100.0,
+        "mineral": 100.0,
+        "energy": 87.5,
+        "community": 78.6
+      }
+    },
+    {
+      "year_label": "Year 1 (Y1)",
+      "year_offset": 1,
+      "date": "2022-02-07",
+      "site_num": "=C9+1",
+      "point_name": "LL2",
+      "lat": -31.42559,
+      "lng": 26.83778,
+      "strata_size_ha": 154,
+      "indicators": {
+        "LCA": 10,
+        "LO": 10,
+        "FG1": 5,
+        "FG2": 5,
+        "FG3": 10,
+        "FG4": -10,
+        "CDS": 10,
+        "CUS": 0,
+        "LA": 5,
+        "LI": 10,
+        "DD": 10,
+        "BS": 20,
+        "C": 0,
+        "WIE": 0,
+        "WAE": 0
+      },
+      "ehi": 85,
+      "photos": [
+        "Y1BELST9.1",
+        "Y1BELST9.3 "
+      ],
+      "process_indices": {
+        "water": 90.0,
+        "mineral": 87.5,
+        "energy": 100.0,
+        "community": 78.6
+      }
+    },
+    {
+      "year_label": "Year 1 (Y1)",
+      "year_offset": 1,
+      "date": "2022-02-07",
+      "site_num": "=C10+1",
+      "point_name": "LL5a",
+      "lat": -31.41715,
+      "lng": 26.82392,
+      "strata_size_ha": 55,
+      "indicators": {
+        "LCA": 10,
+        "LO": 10,
+        "FG1": 10,
+        "FG2": 10,
+        "FG3": 10,
+        "FG4": -10,
+        "CDS": 10,
+        "CUS": 0,
+        "LA": 10,
+        "LI": 10,
+        "DD": 10,
+        "BS": 20,
+        "C": 0,
+        "WIE": 0,
+        "WAE": 0
+      },
+      "ehi": 100,
+      "photos": [
+        "Y1BELST10.1",
+        "Y1BELST10.3 "
+      ],
+      "process_indices": {
+        "water": 100.0,
+        "mineral": 100.0,
+        "energy": 100.0,
+        "community": 85.7
+      }
+    },
+    {
+      "year_label": "Year 2 (Y2)",
+      "year_offset": 2,
+      "date": "2023-05-02",
+      "site_num": 1,
+      "point_name": "E3",
+      "lat": -31.41895,
+      "lng": 26.78038,
+      "strata_size_ha": 10,
+      "indicators": {
+        "LCA": 5,
+        "LO": 10,
+        "FG1": 5,
+        "FG2": 10,
+        "FG3": 10,
+        "FG4": 0,
+        "CDS": 5,
+        "CUS": 0,
+        "LA": 5,
+        "LI": 10,
+        "DD": 5,
+        "BS": 10,
+        "C": -5,
+        "WIE": 0,
+        "WAE": -10
+      },
+      "ehi": 60,
+      "photos": [
+        "Y2BELST1.1",
+        "Y2BELST1.2",
+        "Y2BELST1.3 "
+      ],
+      "process_indices": {
+        "water": 55.0,
+        "mineral": 68.8,
+        "energy": 75.0,
+        "community": 82.1
+      }
+    },
+    {
+      "year_label": "Year 2 (Y2)",
+      "year_offset": 2,
+      "date": "2023-05-02",
+      "site_num": "=C2+1",
+      "point_name": "A1",
+      "lat": -31.38678,
+      "lng": 26.74663,
+      "strata_size_ha": 75,
+      "indicators": {
+        "LCA": 5,
+        "LO": 10,
+        "FG1": 5,
+        "FG2": 5,
+        "FG3": 5,
+        "FG4": 0,
+        "CDS": 5,
+        "CUS": 0,
+        "LA": 10,
+        "LI": 10,
+        "DD": 10,
+        "BS": 20,
+        "C": 0,
+        "WIE": 0,
+        "WAE": 0
+      },
+      "ehi": 85,
+      "photos": [
+        "Y2BELST2.1",
+        "Y2BELST2.2",
+        "Y2BELST2.3 "
+      ],
+      "process_indices": {
+        "water": 100.0,
+        "mineral": 100.0,
+        "energy": 87.5,
+        "community": 75.0
+      }
+    },
+    {
+      "year_label": "Year 2 (Y2)",
+      "year_offset": 2,
+      "date": "2023-05-02",
+      "site_num": "=C3+1",
+      "point_name": "B4",
+      "lat": -31.41006,
+      "lng": 26.76693,
+      "strata_size_ha": 38,
+      "indicators": {
+        "LCA": 10,
+        "LO": 10,
+        "FG1": 5,
+        "FG2": 10,
+        "FG3": 5,
+        "FG4": 0,
+        "CDS": 5,
+        "CUS": 0,
+        "LA": 10,
+        "LI": 10,
+        "DD": 10,
+        "BS": 20,
+        "C": 0,
+        "WIE": 0,
+        "WAE": 0
+      },
+      "ehi": 95,
+      "photos": [
+        "Y2BELST3.1",
+        "Y2BELST3.2",
+        "Y2BELST3.3 "
+      ],
+      "process_indices": {
+        "water": 100.0,
+        "mineral": 100.0,
+        "energy": 100.0,
+        "community": 78.6
+      }
+    },
+    {
+      "year_label": "Year 2 (Y2)",
+      "year_offset": 2,
+      "date": "2023-05-02",
+      "site_num": "=C4+1",
+      "point_name": "D1",
+      "lat": -31.4221,
+      "lng": 26.78013,
+      "strata_size_ha": 43,
+      "indicators": {
+        "LCA": 10,
+        "LO": 10,
+        "FG1": 5,
+        "FG2": 5,
+        "FG3": 5,
+        "FG4": 0,
+        "CDS": 5,
+        "CUS": 0,
+        "LA": 10,
+        "LI": 10,
+        "DD": 5,
+        "BS": 20,
+        "C": 0,
+        "WIE": 0,
+        "WAE": 0
+      },
+      "ehi": 85,
+      "photos": [
+        "Y2BELST4.1",
+        "Y2BELST4.2",
+        "Y2BELST4.3 "
+      ],
+      "process_indices": {
+        "water": 100.0,
+        "mineral": 87.5,
+        "energy": 100.0,
+        "community": 75.0
+      }
+    },
+    {
+      "year_label": "Year 2 (Y2)",
+      "year_offset": 2,
+      "date": "2023-05-02",
+      "site_num": "=C5+1",
+      "point_name": "Perde Camp 4",
+      "lat": -31.38818,
+      "lng": 26.76439,
+      "strata_size_ha": 50,
+      "indicators": {
+        "LCA": 5,
+        "LO": 10,
+        "FG1": 10,
+        "FG2": 5,
+        "FG3": 5,
+        "FG4": 0,
+        "CDS": 5,
+        "CUS": 0,
+        "LA": 5,
+        "LI": 10,
+        "DD": 5,
+        "BS": 20,
+        "C": 0,
+        "WIE": 0,
+        "WAE": 0
+      },
+      "ehi": 80,
+      "photos": [
+        "Y2BELST5.1",
+        "Y2BELST5.2",
+        "Y2BELST5.3 "
+      ],
+      "process_indices": {
+        "water": 90.0,
+        "mineral": 75.0,
+        "energy": 87.5,
+        "community": 78.6
+      }
+    },
+    {
+      "year_label": "Year 2 (Y2)",
+      "year_offset": 2,
+      "date": "2023-05-02",
+      "site_num": "=C6+1",
+      "point_name": "SL6B",
+      "lat": -31.399,
+      "lng": 26.78065,
+      "strata_size_ha": 5,
+      "indicators": {
+        "LCA": -5,
+        "LO": 10,
+        "FG1": 0,
+        "FG2": 0,
+        "FG3": 0,
+        "FG4": -10,
+        "CDS": 0,
+        "CUS": 0,
+        "LA": 0,
+        "LI": 5,
+        "DD": 5,
+        "BS": -10,
+        "C": -5,
+        "WIE": 0,
+        "WAE": -10
+      },
+      "ehi": -20,
+      "photos": [
+        "Y2BELST6.1",
+        "Y2BELST6.2",
+        "Y2BELST6.3 "
+      ],
+      "process_indices": {
+        "water": 35.0,
+        "mineral": 31.2,
+        "energy": 25.0,
+        "community": 50.0
+      }
+    },
+    {
+      "year_label": "Year 2 (Y2)",
+      "year_offset": 2,
+      "date": "2023-05-02",
+      "site_num": "=C7+1",
+      "point_name": "E2",
+      "lat": -31.39401,
+      "lng": 26.77195,
+      "strata_size_ha": 40,
+      "indicators": {
+        "LCA": -5,
+        "LO": 5,
+        "FG1": 0,
+        "FG2": -10,
+        "FG3": 5,
+        "FG4": 0,
+        "CDS": 0,
+        "CUS": 0,
+        "LA": 0,
+        "LI": 0,
+        "DD": 5,
+        "BS": 20,
+        "C": -10,
+        "WIE": 0,
+        "WAE": 0
+      },
+      "ehi": 10,
+      "photos": [
+        "Y2BELST7.1",
+        "Y2BELST7.2",
+        "Y2BELST7.3 "
+      ],
+      "process_indices": {
+        "water": 60.0,
+        "mineral": 37.5,
+        "energy": 62.5,
+        "community": 50.0
+      }
+    },
+    {
+      "year_label": "Year 2 (Y2)",
+      "year_offset": 2,
+      "date": "2023-05-02",
+      "site_num": "=C8+1",
+      "point_name": "LL3",
+      "lat": -31.41911,
+      "lng": 26.84556,
+      "strata_size_ha": 148,
+      "indicators": {
+        "LCA": 5,
+        "LO": 10,
+        "FG1": 10,
+        "FG2": 10,
+        "FG3": 5,
+        "FG4": 0,
+        "CDS": 5,
+        "CUS": 0,
+        "LA": 10,
+        "LI": 10,
+        "DD": 5,
+        "BS": 20,
+        "C": 0,
+        "WIE": 0,
+        "WAE": 0
+      },
+      "ehi": 90,
+      "photos": [
+        "Y2BELST8.1",
+        "Y2BELST8.2",
+        "Y2BELST8.3 "
+      ],
+      "process_indices": {
+        "water": 100.0,
+        "mineral": 87.5,
+        "energy": 87.5,
+        "community": 82.1
+      }
+    },
+    {
+      "year_label": "Year 2 (Y2)",
+      "year_offset": 2,
+      "date": "2023-05-02",
+      "site_num": "=C9+1",
+      "point_name": "LL2",
+      "lat": -31.42559,
+      "lng": 26.83778,
+      "strata_size_ha": 154,
+      "indicators": {
+        "LCA": 5,
+        "LO": 5,
+        "FG1": 5,
+        "FG2": 10,
+        "FG3": 5,
+        "FG4": 0,
+        "CDS": 0,
+        "CUS": 0,
+        "LA": 10,
+        "LI": 10,
+        "DD": 5,
+        "BS": 20,
+        "C": 0,
+        "WIE": 0,
+        "WAE": 0
+      },
+      "ehi": 75,
+      "photos": [
+        "Y2BELST9.1",
+        "Y2BELST9.2",
+        "Y2BELST9.3 "
+      ],
+      "process_indices": {
+        "water": 100.0,
+        "mineral": 87.5,
+        "energy": 87.5,
+        "community": 67.9
+      }
+    },
+    {
+      "year_label": "Year 2 (Y2)",
+      "year_offset": 2,
+      "date": "2023-05-02",
+      "site_num": "=C10+1",
+      "point_name": "LL5a",
+      "lat": -31.41715,
+      "lng": 26.82392,
+      "strata_size_ha": 55,
+      "indicators": {
+        "LCA": 10,
+        "LO": 10,
+        "FG1": 10,
+        "FG2": 5,
+        "FG3": 10,
+        "FG4": 0,
+        "CDS": 5,
+        "CUS": 0,
+        "LA": 10,
+        "LI": 10,
+        "DD": 10,
+        "BS": 20,
+        "C": 0,
+        "WIE": 0,
+        "WAE": 0
+      },
+      "ehi": 100,
+      "photos": [
+        "Y2BELST10.1",
+        "Y2BELST10.2",
+        "Y2BELST10.3 "
+      ],
+      "process_indices": {
+        "water": 100.0,
+        "mineral": 100.0,
+        "energy": 100.0,
+        "community": 82.1
+      }
+    },
+    {
+      "year_label": "Year 3 (Y3)",
+      "year_offset": 3,
+      "date": "2024-02-05",
+      "site_num": 1,
+      "point_name": "E3",
+      "lat": -31.41895,
+      "lng": 26.78038,
+      "strata_size_ha": 10,
+      "indicators": {
+        "LCA": 5,
+        "LO": 5,
+        "FG1": 5,
+        "FG2": 5,
+        "FG3": 0,
+        "FG4": 0,
+        "CDS": 5,
+        "CUS": 0,
+        "LA": 10,
+        "LI": 5,
+        "DD": 10,
+        "BS": 10,
+        "C": -10,
+        "WIE": 0,
+        "WAE": 0
+      },
+      "ehi": 50,
+      "photos": [
+        "Y3BELST1.1",
+        "Y3BELST1.2",
+        "Y3BELST1.3 "
+      ],
+      "process_indices": {
+        "water": 75.0,
+        "mineral": 81.2,
+        "energy": 75.0,
+        "community": 67.9
+      }
+    },
+    {
+      "year_label": "Year 3 (Y3)",
+      "year_offset": 3,
+      "date": "2024-02-05",
+      "site_num": "=C2+1",
+      "point_name": "A1",
+      "lat": -31.38678,
+      "lng": 26.74663,
+      "strata_size_ha": 75,
+      "indicators": {
+        "LCA": 5,
+        "LO": 10,
+        "FG1": 5,
+        "FG2": 10,
+        "FG3": 5,
+        "FG4": -10,
+        "CDS": 5,
+        "CUS": 0,
+        "LA": 10,
+        "LI": 10,
+        "DD": 10,
+        "BS": 20,
+        "C": 0,
+        "WIE": 0,
+        "WAE": 0
+      },
+      "ehi": 80,
+      "photos": [
+        "Y3BELST2.1",
+        "Y3BELST2.2",
+        "Y3BELST2.3 "
+      ],
+      "process_indices": {
+        "water": 100.0,
+        "mineral": 100.0,
+        "energy": 87.5,
+        "community": 71.4
+      }
+    },
+    {
+      "year_label": "Year 3 (Y3)",
+      "year_offset": 3,
+      "date": "2024-02-05",
+      "site_num": "=C3+1",
+      "point_name": "B4",
+      "lat": -31.41006,
+      "lng": 26.76693,
+      "strata_size_ha": 38,
+      "indicators": {
+        "LCA": 10,
+        "LO": 10,
+        "FG1": 10,
+        "FG2": 10,
+        "FG3": 10,
+        "FG4": -10,
+        "CDS": 10,
+        "CUS": 0,
+        "LA": 10,
+        "LI": 10,
+        "DD": 10,
+        "BS": 20,
+        "C": 0,
+        "WIE": 0,
+        "WAE": 0
+      },
+      "ehi": 100,
+      "photos": [
+        "Y3BELST3.1",
+        "Y3BELST3.2",
+        "Y3BELST3.3 "
+      ],
+      "process_indices": {
+        "water": 100.0,
+        "mineral": 100.0,
+        "energy": 100.0,
+        "community": 85.7
+      }
+    },
+    {
+      "year_label": "Year 3 (Y3)",
+      "year_offset": 3,
+      "date": "2024-02-05",
+      "site_num": "=C4+1",
+      "point_name": "D1",
+      "lat": -31.4221,
+      "lng": 26.78013,
+      "strata_size_ha": 43,
+      "indicators": {
+        "LCA": 5,
+        "LO": 5,
+        "FG1": 5,
+        "FG2": 0,
+        "FG3": 5,
+        "FG4": -10,
+        "CDS": 5,
+        "CUS": -5,
+        "LA": 10,
+        "LI": 5,
+        "DD": 5,
+        "BS": 20,
+        "C": -5,
+        "WIE": 0,
+        "WAE": 0
+      },
+      "ehi": 45,
+      "photos": [
+        "Y3BELST4.1",
+        "Y3BELST4.2",
+        "Y3BELST4.3 "
+      ],
+      "process_indices": {
+        "water": 90.0,
+        "mineral": 75.0,
+        "energy": 87.5,
+        "community": 53.6
+      }
+    },
+    {
+      "year_label": "Year 3 (Y3)",
+      "year_offset": 3,
+      "date": "2024-02-05",
+      "site_num": "=C5+1",
+      "point_name": "Perde Camp 4",
+      "lat": -31.38818,
+      "lng": 26.76439,
+      "strata_size_ha": 50,
+      "indicators": {
+        "LCA": 5,
+        "LO": 10,
+        "FG1": 10,
+        "FG2": 10,
+        "FG3": 10,
+        "FG4": -10,
+        "CDS": 10,
+        "CUS": 0,
+        "LA": 5,
+        "LI": 10,
+        "DD": 10,
+        "BS": 10,
+        "C": -10,
+        "WIE": 0,
+        "WAE": 0
+      },
+      "ehi": 70,
+      "photos": [
+        "Y3BELST5.1",
+        "Y3BELST5.2",
+        "Y3BELST5.3 "
+      ],
+      "process_indices": {
+        "water": 65.0,
+        "mineral": 81.2,
+        "energy": 75.0,
+        "community": 85.7
+      }
+    },
+    {
+      "year_label": "Year 3 (Y3)",
+      "year_offset": 3,
+      "date": "2024-02-05",
+      "site_num": "=C6+1",
+      "point_name": "SL6B",
+      "lat": -31.399,
+      "lng": 26.78065,
+      "strata_size_ha": 5,
+      "indicators": {
+        "LCA": 0,
+        "LO": 10,
+        "FG1": -10,
+        "FG2": 0,
+        "FG3": 10,
+        "FG4": -10,
+        "CDS": 0,
+        "CUS": 0,
+        "LA": 5,
+        "LI": 0,
+        "DD": 5,
+        "BS": 0,
+        "C": -10,
+        "WIE": 0,
+        "WAE": 0
+      },
+      "ehi": 0,
+      "photos": [
+        "Y3BELST6.1",
+        "Y3BELST6.2",
+        "Y3BELST6.3 "
+      ],
+      "process_indices": {
+        "water": 60.0,
+        "mineral": 37.5,
+        "energy": 50.0,
+        "community": 50.0
+      }
+    },
+    {
+      "year_label": "Year 3 (Y3)",
+      "year_offset": 3,
+      "date": "2024-02-05",
+      "site_num": "=C7+1",
+      "point_name": "E2",
+      "lat": -31.39401,
+      "lng": 26.77195,
+      "strata_size_ha": 40,
+      "indicators": {
+        "LCA": -5,
+        "LO": 5,
+        "FG1": 5,
+        "FG2": 5,
+        "FG3": 10,
+        "FG4": 0,
+        "CDS": 5,
+        "CUS": 0,
+        "LA": 0,
+        "LI": 0,
+        "DD": 0,
+        "BS": 10,
+        "C": -5,
+        "WIE": 0,
+        "WAE": 0
+      },
+      "ehi": 30,
+      "photos": [
+        "Y3BELST7.1",
+        "Y3BELST7.2",
+        "Y3BELST7.3 "
+      ],
+      "process_indices": {
+        "water": 65.0,
+        "mineral": 18.8,
+        "energy": 50.0,
+        "community": 75.0
+      }
+    },
+    {
+      "year_label": "Year 3 (Y3)",
+      "year_offset": 3,
+      "date": "2024-02-05",
+      "site_num": "=C8+1",
+      "point_name": "LL3",
+      "lat": -31.41911,
+      "lng": 26.84556,
+      "strata_size_ha": 148,
+      "indicators": {
+        "LCA": 10,
+        "LO": 10,
+        "FG1": 5,
+        "FG2": 5,
+        "FG3": 10,
+        "FG4": -10,
+        "CDS": 5,
+        "CUS": 0,
+        "LA": 10,
+        "LI": 10,
+        "DD": 5,
+        "BS": 20,
+        "C": 0,
+        "WIE": 0,
+        "WAE": 0
+      },
+      "ehi": 80,
+      "photos": [
+        "Y3BELST8.1",
+        "Y3BELST8.2",
+        "Y3BELST8.3 "
+      ],
+      "process_indices": {
+        "water": 100.0,
+        "mineral": 87.5,
+        "energy": 100.0,
+        "community": 71.4
+      }
+    },
+    {
+      "year_label": "Year 3 (Y3)",
+      "year_offset": 3,
+      "date": "2024-02-05",
+      "site_num": "=C9+1",
+      "point_name": "LL2",
+      "lat": -31.42559,
+      "lng": 26.83778,
+      "strata_size_ha": 154,
+      "indicators": {
+        "LCA": 10,
+        "LO": 10,
+        "FG1": 10,
+        "FG2": 10,
+        "FG3": 5,
+        "FG4": -10,
+        "CDS": 10,
+        "CUS": 0,
+        "LA": 10,
+        "LI": 5,
+        "DD": 5,
+        "BS": 20,
+        "C": 0,
+        "WIE": 0,
+        "WAE": 0
+      },
+      "ehi": 85,
+      "photos": [
+        "Y3BELST9.1",
+        "Y3BELST9.2",
+        "Y BELST9.3 "
+      ],
+      "process_indices": {
+        "water": 100.0,
+        "mineral": 75.0,
+        "energy": 100.0,
+        "community": 82.1
+      }
+    },
+    {
+      "year_label": "Year 3 (Y3)",
+      "year_offset": 3,
+      "date": "2024-02-05",
+      "site_num": "=C10+1",
+      "point_name": "LL5a",
+      "lat": -31.41715,
+      "lng": 26.82392,
+      "strata_size_ha": 55,
+      "indicators": {
+        "LCA": 5,
+        "LO": 10,
+        "FG1": 5,
+        "FG2": 5,
+        "FG3": 10,
+        "FG4": -10,
+        "CDS": 5,
+        "CUS": 0,
+        "LA": 10,
+        "LI": 10,
+        "DD": 5,
+        "BS": 20,
+        "C": 0,
+        "WIE": 0,
+        "WAE": 0
+      },
+      "ehi": 75,
+      "photos": [
+        "Y3BELST10.1",
+        "Y3BELST10.2",
+        "Y3BELST10.3 "
+      ],
+      "process_indices": {
+        "water": 100.0,
+        "mineral": 87.5,
+        "energy": 87.5,
+        "community": 71.4
+      }
+    },
+    {
+      "year_label": "Year 4 (Y4)",
+      "year_offset": 4,
+      "date": "2025-02-04",
+      "site_num": 1,
+      "point_name": "E3",
+      "lat": -31.41895,
+      "lng": 26.78038,
+      "strata_size_ha": 10,
+      "indicators": {
+        "LCA": 5,
+        "LO": 0,
+        "FG1": 5,
+        "FG2": 10,
+        "FG3": 5,
+        "FG4": -10,
+        "CDS": 5,
+        "CUS": 0,
+        "LA": 5,
+        "LI": 5,
+        "DD": 10,
+        "BS": 20,
+        "C": -10,
+        "WIE": 0,
+        "WAE": 0
+      },
+      "ehi": 50,
+      "photos": [
+        "Y4BELST1.1",
+        "Y4BELST1.2",
+        "Y4BELST1.3 "
+      ],
+      "process_indices": {
+        "water": 70.0,
+        "mineral": 75.0,
+        "energy": 87.5,
+        "community": 64.3
+      }
+    },
+    {
+      "year_label": "Year 4 (Y4)",
+      "year_offset": 4,
+      "date": "2025-02-04",
+      "site_num": "=C2+1",
+      "point_name": "A1",
+      "lat": -31.38678,
+      "lng": 26.74663,
+      "strata_size_ha": 75,
+      "indicators": {
+        "LCA": 5,
+        "LO": 5,
+        "FG1": 0,
+        "FG2": 10,
+        "FG3": 0,
+        "FG4": -10,
+        "CDS": 10,
+        "CUS": 0,
+        "LA": 10,
+        "LI": 10,
+        "DD": 5,
+        "BS": 20,
+        "C": 0,
+        "WIE": 0,
+        "WAE": 0
+      },
+      "ehi": 65,
+      "photos": [
+        "Y4BELST2.1",
+        "Y4BELST2.2",
+        "Y4BELST2.3 "
+      ],
+      "process_indices": {
+        "water": 100.0,
+        "mineral": 87.5,
+        "energy": 87.5,
+        "community": 67.9
+      }
+    },
+    {
+      "year_label": "Year 4 (Y4)",
+      "year_offset": 4,
+      "date": "2025-02-04",
+      "site_num": "=C3+1",
+      "point_name": "B4",
+      "lat": -31.41006,
+      "lng": 26.76693,
+      "strata_size_ha": 38,
+      "indicators": {
+        "LCA": 10,
+        "LO": 10,
+        "FG1": 5,
+        "FG2": 5,
+        "FG3": 0,
+        "FG4": -10,
+        "CDS": 5,
+        "CUS": 0,
+        "LA": 10,
+        "LI": 10,
+        "DD": 10,
+        "BS": 20,
+        "C": 0,
+        "WIE": 0,
+        "WAE": 0
+      },
+      "ehi": 75,
+      "photos": [
+        "Y4BELST3.1",
+        "Y4BELST3.2",
+        "Y4BELST3.3 "
+      ],
+      "process_indices": {
+        "water": 100.0,
+        "mineral": 100.0,
+        "energy": 100.0,
+        "community": 64.3
+      }
+    },
+    {
+      "year_label": "Year 4 (Y4)",
+      "year_offset": 4,
+      "date": "2025-02-04",
+      "site_num": "=C4+1",
+      "point_name": "D1",
+      "lat": -31.4221,
+      "lng": 26.78013,
+      "strata_size_ha": 43,
+      "indicators": {
+        "LCA": 5,
+        "LO": 10,
+        "FG1": 5,
+        "FG2": 0,
+        "FG3": 0,
+        "FG4": -10,
+        "CDS": 5,
+        "CUS": -5,
+        "LA": 10,
+        "LI": 10,
+        "DD": 10,
+        "BS": 20,
+        "C": -5,
+        "WIE": 0,
+        "WAE": 0
+      },
+      "ehi": 55,
+      "photos": [
+        "Y4BELST4.1",
+        "Y4BELST4.2",
+        "Y4BELST4.3 "
+      ],
+      "process_indices": {
+        "water": 90.0,
+        "mineral": 100.0,
+        "energy": 87.5,
+        "community": 53.6
+      }
+    },
+    {
+      "year_label": "Year 4 (Y4)",
+      "year_offset": 4,
+      "date": "2025-02-04",
+      "site_num": "=C5+1",
+      "point_name": "Perde Camp 4",
+      "lat": -31.38818,
+      "lng": 26.76439,
+      "strata_size_ha": 50,
+      "indicators": {
+        "LCA": 5,
+        "LO": 5,
+        "FG1": 5,
+        "FG2": 10,
+        "FG3": 0,
+        "FG4": -10,
+        "CDS": 10,
+        "CUS": 0,
+        "LA": 5,
+        "LI": 5,
+        "DD": 5,
+        "BS": 20,
+        "C": -5,
+        "WIE": 0,
+        "WAE": 0
+      },
+      "ehi": 55,
+      "photos": [
+        "Y4BELST5.1",
+        "Y4BELST5.2",
+        "Y4BELST5.3 "
+      ],
+      "process_indices": {
+        "water": 80.0,
+        "mineral": 62.5,
+        "energy": 87.5,
+        "community": 71.4
+      }
+    },
+    {
+      "year_label": "Year 4 (Y4)",
+      "year_offset": 4,
+      "date": "2025-02-04",
+      "site_num": "=C6+1",
+      "point_name": "SL6B",
+      "lat": -31.399,
+      "lng": 26.78065,
+      "strata_size_ha": 5,
+      "indicators": {
+        "LCA": -5,
+        "LO": 10,
+        "FG1": -10,
+        "FG2": -5,
+        "FG3": 5,
+        "FG4": -10,
+        "CDS": 0,
+        "CUS": -10,
+        "LA": 5,
+        "LI": 0,
+        "DD": 10,
+        "BS": 0,
+        "C": -10,
+        "WIE": 0,
+        "WAE": 0
+      },
+      "ehi": -20,
+      "photos": [
+        "Y4BELST6.1",
+        "Y4BELST6.2",
+        "Y4BELST6.3 "
+      ],
+      "process_indices": {
+        "water": 60.0,
+        "mineral": 50.0,
+        "energy": 37.5,
+        "community": 28.6
+      }
+    },
+    {
+      "year_label": "Year 4 (Y4)",
+      "year_offset": 4,
+      "date": "2025-02-04",
+      "site_num": "=C7+1",
+      "point_name": "E2",
+      "lat": -31.39401,
+      "lng": 26.77195,
+      "strata_size_ha": 40,
+      "indicators": {
+        "LCA": -5,
+        "LO": 5,
+        "FG1": 0,
+        "FG2": 0,
+        "FG3": 10,
+        "FG4": 5,
+        "CDS": 0,
+        "CUS": 0,
+        "LA": 5,
+        "LI": 0,
+        "DD": 10,
+        "BS": 10,
+        "C": -5,
+        "WIE": 0,
+        "WAE": 0
+      },
+      "ehi": 35,
+      "photos": [
+        "Y4BELST7.1",
+        "Y4BELST7.2",
+        "Y4BELST7.3 "
+      ],
+      "process_indices": {
+        "water": 75.0,
+        "mineral": 56.2,
+        "energy": 50.0,
+        "community": 64.3
+      }
+    },
+    {
+      "year_label": "Year 4 (Y4)",
+      "year_offset": 4,
+      "date": "2025-02-04",
+      "site_num": "=C8+1",
+      "point_name": "LL3",
+      "lat": -31.41911,
+      "lng": 26.84556,
+      "strata_size_ha": 148,
+      "indicators": {
+        "LCA": 10,
+        "LO": 10,
+        "FG1": 5,
+        "FG2": 0,
+        "FG3": 0,
+        "FG4": -10,
+        "CDS": 5,
+        "CUS": 0,
+        "LA": 5,
+        "LI": 5,
+        "DD": 10,
+        "BS": 20,
+        "C": 0,
+        "WIE": 0,
+        "WAE": 0
+      },
+      "ehi": 60,
+      "photos": [
+        "Y4BELST8.1",
+        "Y4BELST8.2",
+        "Y4 BEL ST8.3 "
+      ],
+      "process_indices": {
+        "water": 90.0,
+        "mineral": 75.0,
+        "energy": 100.0,
+        "community": 60.7
+      }
+    },
+    {
+      "year_label": "Year 4 (Y4)",
+      "year_offset": 4,
+      "date": "2025-02-04",
+      "site_num": "=C9+1",
+      "point_name": "LL2",
+      "lat": -31.42559,
+      "lng": 26.83778,
+      "strata_size_ha": 154,
+      "indicators": {
+        "LCA": 0,
+        "LO": 5,
+        "FG1": 5,
+        "FG2": 0,
+        "FG3": 0,
+        "FG4": -10,
+        "CDS": 0,
+        "CUS": 0,
+        "LA": 10,
+        "LI": 5,
+        "DD": 5,
+        "BS": 10,
+        "C": 0,
+        "WIE": 0,
+        "WAE": 0
+      },
+      "ehi": 30,
+      "photos": [
+        "Y4BELST9.1",
+        "Y4BELST9.2",
+        "Y4BELST9.3 "
+      ],
+      "process_indices": {
+        "water": 95.0,
+        "mineral": 68.8,
+        "energy": 62.5,
+        "community": 50.0
+      }
+    },
+    {
+      "year_label": "Year 4 (Y4)",
+      "year_offset": 4,
+      "date": "2025-02-04",
+      "site_num": "=C10+1",
+      "point_name": "LL5a",
+      "lat": -31.41715,
+      "lng": 26.82392,
+      "strata_size_ha": 55,
+      "indicators": {
+        "LCA": 10,
+        "LO": 10,
+        "FG1": 5,
+        "FG2": 5,
+        "FG3": 5,
+        "FG4": -10,
+        "CDS": 10,
+        "CUS": 0,
+        "LA": 10,
+        "LI": 5,
+        "DD": 10,
+        "BS": 20,
+        "C": 0,
+        "WIE": 0,
+        "WAE": 0
+      },
+      "ehi": 80,
+      "photos": [
+        "Y4BELST10.1",
+        "Y4BELST10.2",
+        "Y4BELST10.3 "
+      ],
+      "process_indices": {
+        "water": 100.0,
+        "mineral": 87.5,
+        "energy": 100.0,
+        "community": 75.0
+      }
+    }
+  ],
+  "trend": [
+    {
+      "year_label": "Baseline (Y0)",
+      "year_offset": 0,
+      "date": "2021-02-16",
+      "property_ehi_weighted": 69.5,
+      "property_ehi_simple_mean": 58.0,
+      "point_count": 10,
+      "total_strata_ha": 618,
+      "process_indices": {
+        "water": 91.9,
+        "mineral": 80.5,
+        "energy": 89.5,
+        "community": 65.7
+      }
+    },
+    {
+      "year_label": "Year 1 (Y1)",
+      "year_offset": 1,
+      "date": "2022-02-07",
+      "property_ehi_weighted": 69.9,
+      "property_ehi_simple_mean": 51.0,
+      "point_count": 10,
+      "total_strata_ha": 618,
+      "process_indices": {
+        "water": 90.2,
+        "mineral": 84.3,
+        "energy": 89.0,
+        "community": 70.5
+      }
+    },
+    {
+      "year_label": "Year 2 (Y2)",
+      "year_offset": 2,
+      "date": "2023-05-02",
+      "property_ehi_weighted": 79.1,
+      "property_ehi_simple_mean": 66.0,
+      "point_count": 10,
+      "total_strata_ha": 618,
+      "process_indices": {
+        "water": 95.3,
+        "mineral": 85.9,
+        "energy": 87.9,
+        "community": 74.4
+      }
+    },
+    {
+      "year_label": "Year 3 (Y3)",
+      "year_offset": 3,
+      "date": "2024-02-05",
+      "property_ehi_weighted": 74.4,
+      "property_ehi_simple_mean": 61.5,
+      "point_count": 10,
+      "total_strata_ha": 618,
+      "process_indices": {
+        "water": 93.5,
+        "mineral": 80.3,
+        "energy": 90.4,
+        "community": 74.9
+      }
+    },
+    {
+      "year_label": "Year 4 (Y4)",
+      "year_offset": 4,
+      "date": "2025-02-04",
+      "property_ehi_weighted": 52.7,
+      "property_ehi_simple_mean": 48.5,
+      "point_count": 10,
+      "total_strata_ha": 618,
+      "process_indices": {
+        "water": 91.6,
+        "mineral": 76.9,
+        "energy": 83.3,
+        "community": 60.8
+      }
+    }
+  ],
+  "latest_snapshot": {
+    "year_label": "Year 4 (Y4)",
+    "year_offset": 4,
+    "date": "2025-02-04",
+    "property_ehi_weighted": 52.7,
+    "property_ehi_simple_mean": 48.5,
+    "point_count": 10,
+    "total_strata_ha": 618,
+    "process_indices": {
+      "water": 91.6,
+      "mineral": 76.9,
+      "energy": 83.3,
+      "community": 60.8
+    }
+  }
+}

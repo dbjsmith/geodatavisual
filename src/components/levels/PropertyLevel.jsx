@@ -1,11 +1,14 @@
 /**
- * PropertyLevel — property dashboard.
+ * PropertyLevel — property dashboard, now wired to bundled datasets.
  *
- * Adds the new Monitoring Activity Timeline section between the EHI trend
- * chart and the property map. The timeline shows actual survey activity
- * across all monitoring points (sourced from /oauth/surveys per point),
- * while the trend chart above still shows sample data pending Paul's
- * answer on where survey scores are exposed in the OAuth API.
+ * Data sources (in priority order):
+ *   1. Bundled BEL-style dataset (src/data/datasets/*.json) — real
+ *      EOV scores, weighted property EHI, 4-process indices.
+ *   2. ctx fields supplied by BlueBox (currently empty for trend).
+ *   3. Mock placeholders (only as last resort).
+ *
+ * The Monitoring Activity Timeline still pulls live survey activity
+ * from /api/surveys per point — independent of the dataset layer.
  */
 
 import EHIGauge          from '../charts/EHIGauge'
@@ -14,21 +17,39 @@ import ProcessRadar      from '../charts/ProcessRadar'
 import IndicatorGrid     from '../charts/IndicatorGrid'
 import MapView           from '../MapView'
 import MonitoringTimeline from '../MonitoringTimeline'
+
 import { useMappingData }    from '../../hooks/useMappingData'
 import { useApiProbe }       from '../../hooks/useApiProbe'
 import { useSurveyTimeline } from '../../hooks/useSurveyTimeline'
-import { mockTrend, mockIndicators } from '../../lib/mockData'
+import { useEHIDataset }     from '../../hooks/useEHIDataset'
 
 export default function PropertyLevel({ ctx }) {
   const { mappingData, loading, error, debug } = useMappingData(ctx)
-  const timeline = useSurveyTimeline(ctx, mappingData)
+  const timeline   = useSurveyTimeline(ctx, mappingData)
+  const ehiData    = useEHIDataset(ctx)
 
   const property = ctx?.property ?? {}
-  const trend      = ctx?.trend      ?? mockTrend
-  const indicators = ctx?.indicators ?? mockIndicators
-  const areas      = mappingData?.areas ?? []
+  const areas    = mappingData?.areas ?? []
 
-  // Sample apikeys for the discovery probe (so leaf-scoped probes work)
+  // ── Resolve data sources, with dataset preferred ────────────────────
+  const propertyEHI =
+    ehiData.latest?.property_ehi_weighted ?? property.ehi ?? null
+
+  const trendData =
+    ehiData.trend ?? ctx?.trend ?? null
+
+  const processIndices =
+    ehiData.latest?.process_indices ?? null
+
+  // For the baseline overlay on the radar — use Y0 if we have it
+  const baselineProcessIndices =
+    ehiData.trend?.[0]?.process_indices ?? null
+
+  const dataSourceLabel = ehiData.hasData
+    ? `dataset · ${ehiData.dataset.source ?? ''}`
+    : 'no dataset · sample data'
+
+  // Sample apikeys for probe ribbon
   const sampleAreaApikey  = mappingData?.areas?.[0]?._apikey  ?? null
   const samplePointApikey = mappingData?.points?.[0]?._apikey ?? null
 
@@ -38,11 +59,14 @@ export default function PropertyLevel({ ctx }) {
         <div>
           <div className="text-[11px] uppercase tracking-wider text-gdt-slate-lt">Property</div>
           <h1 className="text-xl font-semibold text-gdt-slate">{property.name ?? 'Unnamed property'}</h1>
-          {property.area_ha != null && (
-            <p className="text-sm text-gdt-slate-lt mt-1">
-              {property.area_ha} ha · {areas.length} {areas.length === 1 ? 'area' : 'areas'}
-            </p>
-          )}
+          <p className="text-sm text-gdt-slate-lt mt-1">
+            {ehiData.dataset?.property?.ecoregion ?? property.ecoregion ?? ''}
+            {ehiData.dataset?.property?.is_brittle && ' · brittle environment'}
+            {' · '}
+            {ehiData.dataset?.property?.total_hectares ?? property.area_ha} ha
+            {' · '}
+            {areas.length} {areas.length === 1 ? 'area' : 'areas'}
+          </p>
         </div>
       </header>
 
@@ -53,9 +77,21 @@ export default function PropertyLevel({ ctx }) {
         samplePointApikey={samplePointApikey}
       />
 
-      <section className="grid grid-cols-1 md:grid-cols-[180px_1fr] gap-4">
-        <EHIGauge score={property.ehi} label="Property EHI" />
-        <TrendChart data={trend} title="EHI trend (sample data — awaiting score endpoint)" />
+      <section className="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-4">
+        <EHIGauge
+          score={propertyEHI}
+          label="Property EHI (weighted)"
+          sublabel={
+            ehiData.latest
+              ? `${ehiData.latest.year_label} · ${ehiData.latest.point_count} pts`
+              : null
+          }
+        />
+        <TrendChart
+          data={trendData}
+          title="Property EHI trend"
+          source={ehiData.hasData ? 'BELImport.xlsx · weighted by strata' : null}
+        />
       </section>
 
       <section>
@@ -78,16 +114,18 @@ export default function PropertyLevel({ ctx }) {
           )}
         </h2>
         <div className="h-[420px]">
-          <MapView
-            mappingData={mappingData}
-            loading={loading}
-            error={error}
-          />
+          <MapView mappingData={mappingData} loading={loading} error={error} />
         </div>
       </section>
 
       <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <ProcessRadar data={indicators} />
+        <ProcessRadar
+          indices={processIndices}
+          compare={baselineProcessIndices}
+          currentLabel={ehiData.latest?.year_label ?? 'Current'}
+          compareLabel={ehiData.trend?.[0]?.year_label ?? 'Baseline'}
+          source={ehiData.hasData ? 'BELImport.xlsx · strata-weighted' : null}
+        />
         <IndicatorGrid items={areas} title="Areas" emptyText="No areas defined." />
       </section>
     </div>
@@ -95,7 +133,7 @@ export default function PropertyLevel({ ctx }) {
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
- * MappingDebugRibbon — collapsible debug for the /api/mapping call.
+ * Debug ribbons (mapping API + endpoint discovery) — unchanged.
  * ────────────────────────────────────────────────────────────────────────── */
 function MappingDebugRibbon({ debug }) {
   const statusColour = {
@@ -116,7 +154,6 @@ function MappingDebugRibbon({ debug }) {
           {debug?.reason ? ` · ${debug.reason}` : ''}
         </span>
       </summary>
-
       <div className="p-3 pt-0 space-y-3 font-mono text-[11px]">
         {debug?.requestUrl && (
           <div>
@@ -124,36 +161,22 @@ function MappingDebugRibbon({ debug }) {
             <div className="bg-gdt-bg p-2 rounded break-all">{debug.requestUrl}</div>
           </div>
         )}
-
         {debug?.counts && (
           <div>
             <div className="text-gdt-slate font-semibold mb-1">Counts</div>
             <pre className="bg-gdt-bg p-2 rounded">{JSON.stringify(debug.counts, null, 2)}</pre>
           </div>
         )}
-
         {debug?.fetchError && (
           <div>
             <div className="text-gdt-red font-semibold mb-1">Fetch error</div>
             <div className="bg-red-50 p-2 rounded break-all">{debug.fetchError}</div>
           </div>
         )}
-
         {debug?.responseText && (
           <div>
-            <div className="text-gdt-slate font-semibold mb-1">
-              Response body {debug.httpStatusText ? `(${debug.httpStatusText})` : ''}
-            </div>
-            <pre className="bg-gdt-bg p-2 rounded max-h-64 overflow-auto whitespace-pre-wrap break-all">
-              {debug.responseText}
-            </pre>
-          </div>
-        )}
-
-        {debug?.ctxSummary && (
-          <div>
-            <div className="text-gdt-slate font-semibold mb-1">ctx summary</div>
-            <pre className="bg-gdt-bg p-2 rounded">{JSON.stringify(debug.ctxSummary, null, 2)}</pre>
+            <div className="text-gdt-slate font-semibold mb-1">Response body</div>
+            <pre className="bg-gdt-bg p-2 rounded max-h-64 overflow-auto whitespace-pre-wrap break-all">{debug.responseText}</pre>
           </div>
         )}
       </div>
@@ -161,14 +184,8 @@ function MappingDebugRibbon({ debug }) {
   )
 }
 
-/* ──────────────────────────────────────────────────────────────────────────
- * ProbeRibbon — collapsible API discovery panel.
- * ────────────────────────────────────────────────────────────────────────── */
 function ProbeRibbon({ ctx, sampleAreaApikey, samplePointApikey }) {
-  const { results, loading, error } = useApiProbe(ctx, {
-    sampleAreaApikey,
-    samplePointApikey,
-  })
+  const { results, loading, error } = useApiProbe(ctx, { sampleAreaApikey, samplePointApikey })
 
   const probes    = results?.results   ?? []
   const bootstrap = results?.bootstrap ?? null
@@ -190,7 +207,6 @@ function ProbeRibbon({ ctx, sampleAreaApikey, samplePointApikey }) {
         <span className="font-semibold text-gdt-slate">🔍 API discovery probe</span>
         <span className="font-mono text-gdt-slate-lt">{headerStatus}</span>
       </summary>
-
       <div className="p-3 pt-0 space-y-2 font-mono text-[11px]">
         {bootstrap && (
           <div className="bg-gdt-bg p-2 rounded text-gdt-slate-lt">
@@ -200,14 +216,7 @@ function ProbeRibbon({ ctx, sampleAreaApikey, samplePointApikey }) {
               : <span className="text-gdt-red">no survey_apikey discovered{bootstrap.error ? ` (${bootstrap.error})` : ''}</span>}
           </div>
         )}
-
-        {probes.length === 0 && !loading && !error && (
-          <div className="text-gdt-slate-lt p-2">No results yet.</div>
-        )}
-
-        {probes.map((r, i) => (
-          <ProbeRow key={i} result={r} />
-        ))}
+        {probes.map((r, i) => <ProbeRow key={i} result={r} />)}
       </div>
     </details>
   )
@@ -221,11 +230,7 @@ function ProbeRow({ result: r }) {
     r.status === 404   ? 'text-gdt-slate-lt' :
     r.status >= 400 && r.status < 500 ? 'text-gdt-amber' :
                                        'text-gdt-red'
-
-  const statusLabel =
-    r.skipped ? 'SKIP' :
-    r.error   ? 'ERR'  :
-    (r.status ?? '—')
+  const statusLabel = r.skipped ? 'SKIP' : r.error ? 'ERR' : (r.status ?? '—')
 
   return (
     <details className="border border-gdt-border rounded">
@@ -236,28 +241,16 @@ function ProbeRow({ result: r }) {
           {r.upstream_url ?? (r.reason && `— ${r.reason}`)}
         </span>
         {r.time_ms != null && (
-          <span className="text-gdt-slate-lt text-[10px] ml-auto flex-shrink-0">
-            {r.time_ms}ms
-          </span>
+          <span className="text-gdt-slate-lt text-[10px] ml-auto flex-shrink-0">{r.time_ms}ms</span>
         )}
       </summary>
       <div className="p-2 pt-0 space-y-1">
-        {r.skipped && (
-          <div className="text-gdt-slate-lt">skipped — {r.reason}</div>
-        )}
-        {r.error && (
-          <div className="bg-red-50 p-2 rounded break-all">{r.error}</div>
-        )}
-        {r.content_type && (
-          <div className="text-gdt-slate-lt">content-type: {r.content_type}</div>
-        )}
-        {r.body_length != null && (
-          <div className="text-gdt-slate-lt">body length: {r.body_length} bytes</div>
-        )}
+        {r.skipped && <div className="text-gdt-slate-lt">skipped — {r.reason}</div>}
+        {r.error && <div className="bg-red-50 p-2 rounded break-all">{r.error}</div>}
+        {r.content_type && <div className="text-gdt-slate-lt">content-type: {r.content_type}</div>}
+        {r.body_length != null && <div className="text-gdt-slate-lt">body length: {r.body_length} bytes</div>}
         {r.body_preview && (
-          <pre className="bg-gdt-bg p-2 rounded max-h-48 overflow-auto whitespace-pre-wrap break-all">
-            {r.body_preview}
-          </pre>
+          <pre className="bg-gdt-bg p-2 rounded max-h-48 overflow-auto whitespace-pre-wrap break-all">{r.body_preview}</pre>
         )}
       </div>
     </details>
