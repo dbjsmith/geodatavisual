@@ -1,17 +1,16 @@
 /**
  * useMappingData
  *
- * Fetches real spatial data from the GDT /oauth/mapping endpoint
- * (via the /api/mapping Netlify proxy) using the OAuth token and
- * property_apikey supplied by the BlueBox host via postMessage.
+ * Fetches spatial data from the GDT mapping endpoint via the /api/mapping
+ * Netlify proxy, using the OAuth token + property apikey supplied by the
+ * BlueBox host. Also forwards api_origin + api_base so the proxy can route
+ * to the correct upstream environment (dev vs prod).
  *
- * Dev-mode fallback:
- *   When the token looks like the dev placeholder ('mock-token-dev-only')
- *   we skip the network call and return Thornfield mock data so
- *   `npm run dev` works without a live BlueBox host.
+ * Dev-mode shortcut: when the token is the placeholder used by mockContext,
+ * we skip the network call and return Thornfield mock data — keeps
+ * `npm run dev` working without a live host.
  *
- * Returns:
- *   { mappingData, loading, error }
+ * Returns: { mappingData, loading, error }
  */
 
 import { useState, useEffect } from 'react'
@@ -26,6 +25,8 @@ export function useMappingData(ctx) {
 
   const propertyApikey = ctx?.property?._apikey ?? ctx?.property?.apikey ?? null
   const oauthToken     = ctx?.oauth_token ?? ctx?.token ?? null
+  const apiOrigin      = ctx?.api_origin  ?? null
+  const apiBase        = ctx?.api_base    ?? ''
 
   useEffect(() => {
     if (!propertyApikey || !oauthToken) return
@@ -40,7 +41,11 @@ export function useMappingData(ctx) {
     setLoading(true)
     setError(null)
 
-    fetch(`/api/mapping?property_apikey=${encodeURIComponent(propertyApikey)}`, {
+    const params = new URLSearchParams({ property_apikey: propertyApikey })
+    if (apiOrigin) params.set('api_origin', apiOrigin)
+    if (apiBase)   params.set('api_base',   apiBase)
+
+    fetch(`/api/mapping?${params.toString()}`, {
       headers: { Authorization: `Bearer ${oauthToken}` },
     })
       .then(res => {
@@ -58,7 +63,7 @@ export function useMappingData(ctx) {
       })
 
     return () => { cancelled = true }
-  }, [propertyApikey, oauthToken])
+  }, [propertyApikey, oauthToken, apiOrigin, apiBase])
 
   return { mappingData, loading, error }
 }
