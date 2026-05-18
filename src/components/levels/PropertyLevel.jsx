@@ -1,21 +1,18 @@
 /**
- * PropertyLevel — property dashboard, now wired to bundled datasets.
+ * PropertyLevel — property dashboard.
  *
- * Data sources (in priority order):
- *   1. Bundled BEL-style dataset (src/data/datasets/*.json) — real
- *      EOV scores, weighted property EHI, 4-process indices.
- *   2. ctx fields supplied by BlueBox (currently empty for trend).
- *   3. Mock placeholders (only as last resort).
- *
- * The Monitoring Activity Timeline still pulls live survey activity
- * from /api/surveys per point — independent of the dataset layer.
+ * Adds an Indicator Breakdown section below the radar/grid row. The
+ * breakdown gives per-process drill-down: which EOV indicators are
+ * driving each ecosystem-process score, with baseline → current deltas
+ * and 5-year sparklines.
  */
 
-import EHIGauge          from '../charts/EHIGauge'
-import TrendChart        from '../charts/TrendChart'
-import ProcessRadar      from '../charts/ProcessRadar'
-import IndicatorGrid     from '../charts/IndicatorGrid'
-import MapView           from '../MapView'
+import EHIGauge           from '../charts/EHIGauge'
+import TrendChart         from '../charts/TrendChart'
+import ProcessRadar       from '../charts/ProcessRadar'
+import IndicatorGrid      from '../charts/IndicatorGrid'
+import IndicatorBreakdown from '../charts/IndicatorBreakdown'
+import MapView            from '../MapView'
 import MonitoringTimeline from '../MonitoringTimeline'
 
 import { useMappingData }    from '../../hooks/useMappingData'
@@ -25,31 +22,17 @@ import { useEHIDataset }     from '../../hooks/useEHIDataset'
 
 export default function PropertyLevel({ ctx }) {
   const { mappingData, loading, error, debug } = useMappingData(ctx)
-  const timeline   = useSurveyTimeline(ctx, mappingData)
-  const ehiData    = useEHIDataset(ctx)
+  const timeline = useSurveyTimeline(ctx, mappingData)
+  const ehiData  = useEHIDataset(ctx)
 
   const property = ctx?.property ?? {}
   const areas    = mappingData?.areas ?? []
 
-  // ── Resolve data sources, with dataset preferred ────────────────────
-  const propertyEHI =
-    ehiData.latest?.property_ehi_weighted ?? property.ehi ?? null
+  const propertyEHI = ehiData.latest?.property_ehi_weighted ?? property.ehi ?? null
+  const trendData   = ehiData.trend ?? ctx?.trend ?? null
+  const processIndices         = ehiData.latest?.process_indices    ?? null
+  const baselineProcessIndices = ehiData.trend?.[0]?.process_indices ?? null
 
-  const trendData =
-    ehiData.trend ?? ctx?.trend ?? null
-
-  const processIndices =
-    ehiData.latest?.process_indices ?? null
-
-  // For the baseline overlay on the radar — use Y0 if we have it
-  const baselineProcessIndices =
-    ehiData.trend?.[0]?.process_indices ?? null
-
-  const dataSourceLabel = ehiData.hasData
-    ? `dataset · ${ehiData.dataset.source ?? ''}`
-    : 'no dataset · sample data'
-
-  // Sample apikeys for probe ribbon
   const sampleAreaApikey  = mappingData?.areas?.[0]?._apikey  ?? null
   const samplePointApikey = mappingData?.points?.[0]?._apikey ?? null
 
@@ -81,11 +64,7 @@ export default function PropertyLevel({ ctx }) {
         <EHIGauge
           score={propertyEHI}
           label="Property EHI (weighted)"
-          sublabel={
-            ehiData.latest
-              ? `${ehiData.latest.year_label} · ${ehiData.latest.point_count} pts`
-              : null
-          }
+          sublabel={ehiData.latest ? `${ehiData.latest.year_label} · ${ehiData.latest.point_count} pts` : null}
         />
         <TrendChart
           data={trendData}
@@ -128,12 +107,21 @@ export default function PropertyLevel({ ctx }) {
         />
         <IndicatorGrid items={areas} title="Areas" emptyText="No areas defined." />
       </section>
+
+      {/* NEW: per-indicator drill-down */}
+      <section>
+        <IndicatorBreakdown
+          dataset={ehiData.dataset}
+          latest={ehiData.latest}
+          trend={ehiData.trend}
+        />
+      </section>
     </div>
   )
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
- * Debug ribbons (mapping API + endpoint discovery) — unchanged.
+ * Debug ribbons — unchanged.
  * ────────────────────────────────────────────────────────────────────────── */
 function MappingDebugRibbon({ debug }) {
   const statusColour = {
